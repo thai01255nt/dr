@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<robot name="simple_drone" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- macros / properties -->
+  <xacro:property name="mass" value="1.0"/>
+  <link name="base_link">
+    <inertial>
+      <mass value="${mass}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.02"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <box size="0.3 0.3 0.05"/>
+      </geometry>
+      <material name="grey"><color rgba="0.6 0.6 0.6 1"/></material>
+    </visual>
+    <collision>
+      <geometry><box size="0.3 0.3 0.05"/></geometry>
+    </collision>
+  </link>
+
+  <!-- IMU link -->
+  <link name="imu_link"/>
+  <joint name="base_to_imu" type="fixed">
+    <parent link="base_link"/>
+    <child  link="imu_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- LIDAR link -->
+  <link name="lidar_link"/>
+  <joint name="base_to_lidar" type="fixed">
+    <parent link="base_link"/>
+    <child  link="lidar_link"/>
+    <origin xyz="0 0 0.15" rpy="0 0 0"/>
+  </joint>
+
+  <!-- GPS link -->
+  <link name="gps_link"/>
+  <joint name="base_to_gps" type="fixed">
+    <parent link="base_link"/>
+    <child  link="gps_link"/>
+    <origin xyz="-0.05 0 0.03" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="imu_link">
+    <sensor type="imu" name="imu_sensor">
+      <always_on>true</always_on>
+      <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <namespace>/</namespace>
+        </ros>
+        <updateRateHZ>50.0</updateRateHZ>  <!-- thêm dòng này -->
+	<topicName>/imu</topicName>
+        <bodyName>base_link</bodyName>
+        <frameName>imu_link</frameName>
+        <gaussianNoise>0.01</gaussianNoise>
+        <accelNoiseDensity>0.001</accelNoiseDensity>
+        <rateNoiseDensity>0.0001</rateNoiseDensity>
+        <biasCorrelationTime>1000</biasCorrelationTime>
+        <xyzOffset>0 0 0.02</xyzOffset>   <!-- cùng vị trí như joint base_to_imu -->
+        <rpyOffset>0 0 0</rpyOffset>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="lidar_link">
+    <sensor type="ray" name="hokuyo_sim">
+      <always_on>true</always_on>
+      <update_rate>10.0</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+	    <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.1</min>
+          <max>30.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise type="gaussian">
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+      <plugin name="lidar_plugin" filename="libgazebo_ros_laser.so">
+        <topicName>/scan</topicName>
+        <frameName>lidar_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+  <gazebo>
+    <plugin name="gps_plugin" filename="libhector_gazebo_ros_gps.so">
+      <alwaysOn>1</alwaysOn>
+      <updateRate>10.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <topicName>fix</topicName>
+      <velocityTopicName>fix_velocity</velocityTopicName>
+      <drift>5.0 5.0 5.0</drift>
+      <gaussianNoise>0.1 0.1 0.1</gaussianNoise>
+      <velocityDrift>0 0 0</velocityDrift>
+      <velocityGaussianNoise>0.1 0.1 0.1</velocityGaussianNoise>
+    </plugin>
+  </gazebo>
+  <gazebo>
+    <plugin name="planar_move" filename="libgazebo_ros_planar_move.so">
+      <bodyName>base_link_1</bodyName>
+      <commandTopic>/cmd_vel</commandTopic>
+      <odometryTopic>/gazeboOdom</odometryTopic>
+      <odometryFrame>/gazeboOdom</odometryFrame>
+      <maxLinearVel>2.0</maxLinearVel>
+      <maxAngularVel>1.0</maxAngularVel>
+      <robotBaseFrame>base_link_1</robotBaseFrame>
+      <odometryRate>10.0</odometryRate>
+      <cmdTimeout>-1.0</cmdTimeout>
+    </plugin>
+  </gazebo>
+</robot>
+

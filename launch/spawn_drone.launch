@@ -1,0 +1,38 @@
+<launch>
+  <!-- start gazebo with empty world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find cart_teb_test)/worlds/empty_world.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+  </include>
+
+  <!-- spawn URDF -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cart_teb_test)/urdf/drone.urdf.xacro" />
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model simple_drone -x 0 -y 0 -z 2" respawn="false" output="screen" />
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="robot_description" command="$(find xacro)/xacro $(find cart_teb_test)/urdf/drone.urdf.xacro" />
+  </node>
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
+    <param name="config" value="$(find cart_teb_test)/config/ekf_localization.yaml"/>
+    <param name="use_sim_time" value="true"/>
+  </node>
+  <!-- Cartographer Node -->
+  <node name="cartographer_node" pkg="cartographer_ros"
+        type="cartographer_node" args="
+          -configuration_directory $(find cart_teb_test)/config
+          -configuration_basename drone_2d.lua">
+    <param name="use_sim_time" value="true"/>
+    <param name="start_delay" value="5.0"/>
+    <remap from="scan" to="/scan"/>
+    <remap from="imu" to="/imu"/>
+    <remap from="odom" to="/carto_odom"/>
+  </node>
+  <!-- Occupancy Grid (map_server) -->
+  <node name="cartographer_occupancy_grid_node"
+        pkg="cartographer_ros"
+        type="cartographer_occupancy_grid_node"
+        args="-resolution 0.05" output="screen"/>
+  <!-- RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz"/>
+</launch>
+

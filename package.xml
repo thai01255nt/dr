@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cart_teb_test</name>
+  <version>0.0.1</version>
+  <description>Simple drone simulator with IMU, LIDAR, GPS in Gazebo + ROS Noetic</description>
+
+  <maintainer email="you@example.com">Your Name</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Runtime dependencies -->
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>xacro</depend>
+
+  <!-- Gazebo plugins -->
+  <depend>gazebo_ros</depend>
+  <depend>gazebo_plugins</depend>
+
+  <!-- Optional: for extra IMU/GPS plugins -->
+  <depend>hector_gazebo_plugins</depend>
+
+  <export>
+    <build_type>catkin</build_type>
+  </export>
+</package>

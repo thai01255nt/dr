@@ -1,0 +1,93 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Views
+    Name: Views
+  - Class: rviz/Time
+    Name: Time
+  - Class: rviz/Tool Properties
+    Name: Tool Properties
+
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1.0
+      Plane: XY
+      Color: 160;160;160
+      Line Style: Lines
+      Offset: 0
+    - Class: rviz/TF
+      Name: TF
+      Enabled: true
+    - Class: rviz/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Robot Description: robot_description
+      Visual Enabled: true
+      Collision Enabled: false
+    - Class: rviz/LaserScan
+      Name: LidarScan
+      Enabled: true
+      Topic: /scan
+      Size (m): 0.05
+      Color: 255; 255; 0
+      Style: Points
+    - Class: rviz/Map
+      Name: Map
+      Enabled: true
+      Topic: /map
+      Alpha: 0.7
+      Color Scheme: map
+    - Class: rviz/Map
+      Name: GlobalCostmap
+      Enabled: true
+      Topic: /move_base/global_costmap/costmap
+      Alpha: 0.7
+    - Class: rviz/Map
+      Name: LocalCostmap
+      Enabled: true
+      Topic: /move_base/local_costmap/costmap
+      Alpha: 0.7
+    - Class: rviz/Path
+      Name: GlobalPath
+      Enabled: true
+      Topic: /move_base/GlobalPlanner/plan
+      Color: 0; 0; 255
+    - Class: rviz/Path
+      Name: LocalPath
+      Enabled: true
+      Topic: /move_base/TebLocalPlannerROS/local_plan
+      Color: 255; 0; 0
+    - Class: rviz/MarkerArray
+      Name: TrajectoryNodes
+      Enabled: true
+      Topic: /trajectory_node_list
+      Queue Size: 10
+
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+
+  Tools:
+    - Class: rviz/Interact
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/SetInitialPose       # tool đặt pose ban đầu
+    - Class: rviz/SetGoal               # 2D Nav Goal
+      Topic: /move_base_simple/goal
+
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 10.0        # điều chỉnh để map vừa view
+      Pitch: 1.57
+      Yaw: 0
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+

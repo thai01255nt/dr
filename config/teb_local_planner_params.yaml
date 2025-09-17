@@ -1,0 +1,15 @@
+TebLocalPlannerROS:
+  odom_topic: odom
+  map_frame: map
+  teb_autosize: true
+  max_vel_x: 1.0
+  max_vel_y: 1.0       # enable lateral motion
+  max_vel_theta: 1.0
+  acc_lim_x: 2.0
+  acc_lim_y: 2.0
+  acc_lim_theta: 3.2
+  holonomic_robot: true   # đây chính là đa hướng
+  min_turning_radius: 0.0
+  footprint_model:
+    type: "circular"
+    radius: 0.3O
