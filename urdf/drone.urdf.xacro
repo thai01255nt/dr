@@ -43,7 +43,27 @@
     <child  link="gps_link"/>
     <origin xyz="-0.05 0 0.03" rpy="0 0 0"/>
   </joint>
-
+  <!-- Camera link -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+      <material name="blue"><color rgba="0.2 0.2 0.8 1"/></material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint camera gắn vào base_link, hướng xuống dưới -->
+  <joint name="base_to_camera" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <!-- Đặt camera ở phía dưới drone (z âm), quay -90 độ quanh trục x để hướng xuống -->
+    <origin xyz="0 0 -0.1" rpy="-1.5708 0 0"/>
+  </joint>
   <gazebo reference="imu_link">
     <sensor type="imu" name="imu_sensor">
       <always_on>true</always_on>
@@ -106,6 +126,33 @@
       <velocityDrift>0 0 0</velocityDrift>
       <velocityGaussianNoise>0.1 0.1 0.1</velocityGaussianNoise>
     </plugin>
+  </gazebo>
+  <!-- Gazebo camera plugin -->
+  <gazebo reference="camera_link">
+    <sensor type="camera" name="downward_camera">
+      <always_on>true</always_on>
+      <update_rate>30.0</update_rate>
+      <camera name="head_camera">
+        <horizontal_fov>1.047</horizontal_fov>  <!-- ~60 deg -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>50.0</far>
+        </clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>30.0</updateRate>
+        <cameraName>downward_camera</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+      </plugin>
+    </sensor>
   </gazebo>
   <gazebo>
     <plugin name="planar_move" filename="libgazebo_ros_planar_move.so">

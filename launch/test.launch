@@ -221,7 +221,5 @@
             transform_tolerance: 0.5        # Transform timeout
     </rosparam>
   </node>
-  <!-- RViz -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz"/>
   <node pkg="cart_teb_test" type="publish_init_pose.py" name="init_pose_pub" output="screen"/>
 </launch>

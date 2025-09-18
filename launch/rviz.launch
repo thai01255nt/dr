@@ -1,0 +1,4 @@
+<launch>
+  <!-- RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz"/>
+</launch>
