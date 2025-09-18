@@ -1,23 +1,21 @@
-<launch>
-  <!-- ================================
-       1. Gazebo World
-  ================================== -->
-  <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find cart_teb_test)/worlds/empty_world.world"/>
-    <arg name="paused" value="false"/>
-    <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="true"/>
-    <arg name="headless" value="false"/>
-    <arg name="debug" value="false"/>
-    <arg name="verbose" value="false"/>
-    <!-- Remove tf remap for proper TF handling -->
-  </include>
-  <!-- spawn URDF -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cart_teb_test)/urdf/real.urdf.xacro" />
-  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model simple_drone -x 0 -y 0 -z 2" respawn="false" output="screen" />
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
-    <param name="robot_description" command="$(find xacro)/xacro $(find cart_teb_test)/urdf/real.urdf.xacro" />  </node>
-  <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
+<l<!-- base_link -> imu_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_imu"
+        args="0 0 0 0 0 0 base_link imu_link" />
+  
+  <!-- base_link -> lidar_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_lidar"
+        args="0 0 0.15 0 0 0 base_link lidar_link" />
+  
+  <!-- base_link -> gps_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_gps"
+        args="-0.05 0 0.03 0 0 0 base_link gps_link" />
+  
+  <!-- base_link -> camera_link (quay xuống) -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_camera"
+        args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />aunch>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="laser_link_to_base_laser" 
+        args="0 0 0 0 0 0 laser_link base_laser" />
 
   <!-- Cartographer Node -->
   <node name="cartographer_node" pkg="cartographer_ros"
@@ -226,3 +224,4 @@
   </node>
   <node pkg="cart_teb_test" type="publish_init_pose.py" name="init_pose_pub" output="screen"/>
 </launch>
+
