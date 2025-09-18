@@ -1,4 +1,17 @@
 <launch>
+  <!-- ================================
+       1. Gazebo World
+  ================================== -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find cart_teb_test)/worlds/empty_world.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+    <arg name="verbose" value="false"/>
+    <!-- Remove tf remap for proper TF handling -->
+  </include>
   <!-- spawn URDF -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cart_teb_test)/urdf/real.urdf.xacro" />
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model simple_drone -x 0 -y 0 -z 2" respawn="false" output="screen" />
