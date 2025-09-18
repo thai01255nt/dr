@@ -6,6 +6,10 @@
   <!-- base_link -> lidar_link -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_lidar"
         args="0 0 0.15 0 0 0 base_link lidar_link" />
+
+  <!-- base_link -> lidar_link -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_laser_to_lidar"
+        args="0 0 0 0 0 0 base_laser lidar_link" />
   
   <!-- base_link -> gps_link -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_gps"
@@ -15,8 +19,6 @@
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_camera"
         args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />aunch>
     <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
-    <node pkg="tf2_ros" type="static_transform_publisher" name="laser_link_to_base_laser" 
-        args="0 0 0 0 0 0 laser_link base_laser" />
 
   <!-- Cartographer Node -->
   <node name="cartographer_node" pkg="cartographer_ros"
@@ -24,7 +26,7 @@
           -configuration_directory $(find cart_teb_test)/config
           -configuration_basename drone_2d.lua">
     <remap from="scan" to="/scan"/>
-    <remap from="imu" to="/imu"/>
+    <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
   </node>
   <!-- Occupancy Grid (map_server) -->
@@ -35,7 +37,7 @@
   <!-- Delay start move_base để đợi Cartographer tạo map và transforms -->
   <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true" launch-prefix="bash -c 'sleep 30; $0 $@' ">
     <remap from="scan" to="/scan"/>
-    <remap from="imu" to="/imu"/>
+    <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
     <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
     <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS"/>
