@@ -1,6 +1,6 @@
 <launch>
   <!-- 2. World tùy chỉnh -->
-  <arg name="world" default="$(find cart_teb_test)/worlds/new_world.world" />
+  <arg name="world" default="$(find cart_teb_test)/worlds/empty_world.world" />
 
   <!-- 3. Vehicle (ví dụ: iris) -->
   <arg name="vehicle" default="iris" />
