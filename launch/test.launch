@@ -15,15 +15,6 @@
   </node>
   <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
 
-  <!-- ================================
-       3. MAVROS bridge (PX4 SITL)
-  ================================== -->
-  <include file="$(find mavros)/launch/px4.launch">
-    <arg name="fcu_url" value="udp://:14540@localhost:14557"/>
-    <arg name="gcs_url" value=""/>
-    <arg name="tgt_system" value="1"/>
-    <arg name="tgt_component" value="1"/>
-  </include>
   <!-- Cartographer Node -->
   <node name="cartographer_node" pkg="cartographer_ros"
         type="cartographer_node" args="
