@@ -69,9 +69,7 @@ class AutonomousFlightManager:
         try:
             # Launch takeoff controller
             rospy.loginfo("Starting takeoff sequence...")
-            takeoff_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'takeoff_controller.py'],
-                                             stdout=subprocess.PIPE, 
-                                             stderr=subprocess.PIPE)
+            takeoff_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'takeoff_controller.py'])
             # Monitor takeoff progress
             timeout = 60  # 60 seconds timeout for takeoff
             start_time = time.time()
@@ -103,9 +101,7 @@ class AutonomousFlightManager:
         try:
             self.publish_status("LAUNCHING_CARTOGRAPHER")
             rospy.loginfo("Launching Cartographer...")
-            self.cartographer_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'cartographer.launch'],
-                                                        stdout=subprocess.PIPE, 
-                                                        stderr=subprocess.PIPE)
+            self.cartographer_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'cartographer.launch'])
             time.sleep(5)
             if self.cartographer_process.poll() is None:
                 self.cartographer_launched = True
@@ -139,9 +135,7 @@ class AutonomousFlightManager:
             if not self.movebase_launched:
                 self.publish_status("LAUNCHING_MOVE_BASE")
                 rospy.loginfo("Launching move_base...")
-                self.movebase_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'move_base.launch'],
-                                                        stdout=subprocess.PIPE, 
-                                                        stderr=subprocess.PIPE)
+                self.movebase_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'move_base.launch'])
                 time.sleep(3)
                 if self.movebase_process.poll() is None:
                     self.movebase_launched = True
@@ -153,9 +147,7 @@ class AutonomousFlightManager:
             if not self.rviz_launched:
                 self.publish_status("LAUNCHING_RVIZ")
                 rospy.loginfo("Launching rviz...")
-                self.rviz_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'rviz.launch'],
-                                                    stdout=subprocess.PIPE, 
-                                                    stderr=subprocess.PIPE)
+                self.rviz_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'rviz.launch'])
                 time.sleep(2)
                 if self.rviz_process.poll() is None:
                     self.rviz_launched = True
@@ -173,9 +165,7 @@ class AutonomousFlightManager:
         try:
             self.publish_status("LAUNCHING_TEB_CONTROLLER")
             rospy.loginfo("Launching TEB hover controller...")
-            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'teb_hover_controller.py'],
-                                                          stdout=subprocess.PIPE, 
-                                                          stderr=subprocess.PIPE)
+            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'teb_hover_controller.py'])
             time.sleep(2)
             if self.teb_controller_process.poll() is None:
                 rospy.loginfo("TEB hover controller launched successfully")

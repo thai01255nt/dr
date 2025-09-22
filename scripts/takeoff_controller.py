@@ -37,7 +37,7 @@ class TakeoffController:
         self.takeoff_complete = False
         self.offboard_enabled = False
         
-        rospy.loginfo("TakeoffController initialized")
+        rospy.loginfo("[Takeoff Controller] TakeoffController initialized")
 
     def state_cb(self, msg):
         self.current_state = msg
@@ -50,17 +50,17 @@ class TakeoffController:
 
     def wait_for_connection(self, timeout=30):
         """Wait for MAVROS connection"""
-        rospy.loginfo("Waiting for MAVROS connection...")
+        rospy.loginfo("[Takeoff Controller] Waiting for MAVROS connection...")
         rate = rospy.Rate(20)
         start_time = time.time()
         
         while not rospy.is_shutdown() and not self.current_state.connected:
             if time.time() - start_time > timeout:
-                rospy.logerr("Timeout waiting for MAVROS connection")
+                rospy.logerr("[Takeoff Controller] Timeout waiting for MAVROS connection")
                 return False
             rate.sleep()
         
-        rospy.loginfo("MAVROS connected")
+        rospy.loginfo("[Takeoff Controller] MAVROS connected")
         return True
 
     def send_position_setpoint(self, x=0, y=0, z=1.0):
@@ -84,20 +84,22 @@ class TakeoffController:
     def set_offboard_mode(self):
         """Set vehicle to OFFBOARD mode"""
         if not self.current_state.connected:
-            rospy.logwarn("Vehicle not connected")
+            rospy.logwarn("[Takeoff Controller] Vehicle not connected")
             return False
-            
         if self.current_state.mode != "OFFBOARD":
-            offb_set_mode = SetMode()
-            offb_set_mode.custom_mode = 'OFFBOARD'
-            
-            if self.set_mode_client.call(offb_set_mode).mode_sent:
-                rospy.loginfo("OFFBOARD mode set")
-                return True
-            else:
-                rospy.logwarn("Failed to set OFFBOARD mode")
+            try:
+                resp = self.set_mode_client(0, "OFFBOARD")
+                if resp.mode_sent:
+                    rospy.loginfo("[Takeoff Controller] OFFBOARD mode set")
+                    return True
+                else:
+                    rospy.logwarn("[Takeoff Controller] Failed to set OFFBOARD mode")
+                    return False
+            except rospy.ServiceException as e:
+                rospy.logerr(f"[Takeoff Controller] Service call failed: {e}")
                 return False
         return True
+
 
     def arm_vehicle(self):
         """Arm the vehicle"""
@@ -106,10 +108,10 @@ class TakeoffController:
             arm_cmd.value = True
             
             if self.arming_client.call(arm_cmd).success:
-                rospy.loginfo("Vehicle armed")
+                rospy.loginfo("[Takeoff Controller] Vehicle armed")
                 return True
             else:
-                rospy.logwarn("Failed to arm vehicle")
+                rospy.logwarn("[Takeoff Controller] Failed to arm vehicle")
                 return False
         return True
 
@@ -120,14 +122,14 @@ class TakeoffController:
 
     def takeoff_sequence(self):
         """Execute complete takeoff sequence to 1m altitude"""
-        rospy.loginfo("Starting takeoff sequence...")
+        rospy.loginfo("[Takeoff Controller] Starting takeoff sequence...")
         
         # Wait for connection
         if not self.wait_for_connection():
             return False
         
         # Send a few setpoints before starting offboard mode
-        rospy.loginfo("Sending initial setpoints...")
+        rospy.loginfo("[Takeoff Controller] Sending initial setpoints...")
         rate = rospy.Rate(20)
         for i in range(100):
             if rospy.is_shutdown():
@@ -136,7 +138,7 @@ class TakeoffController:
             rate.sleep()
         
         # Set OFFBOARD mode
-        rospy.loginfo("Setting OFFBOARD mode...")
+        rospy.loginfo("[Takeoff Controller] Setting OFFBOARD mode...")
         if not self.set_offboard_mode():
             return False
         
@@ -146,11 +148,11 @@ class TakeoffController:
             rate.sleep()
         
         if self.current_state.mode != "OFFBOARD":
-            rospy.logerr("Failed to enter OFFBOARD mode")
+            rospy.logerr("[Takeoff Controller] Failed to enter OFFBOARD mode")
             return False
         
         # Arm vehicle
-        rospy.loginfo("Arming vehicle...")
+        rospy.loginfo("[Takeoff Controller] Arming vehicle...")
         if not self.arm_vehicle():
             return False
         
@@ -160,11 +162,11 @@ class TakeoffController:
             rate.sleep()
         
         if not self.current_state.armed:
-            rospy.logerr("Failed to arm vehicle")
+            rospy.logerr("[Takeoff Controller] Failed to arm vehicle")
             return False
         
         # Takeoff to target altitude
-        rospy.loginfo(f"Taking off to {self.target_altitude}m altitude...")
+        rospy.loginfo(f"[Takeoff Controller] Taking off to {self.target_altitude}m altitude...")
         start_time = time.time()
         takeoff_timeout = 30  # 30 seconds timeout
         
@@ -174,12 +176,12 @@ class TakeoffController:
             
             # Check if altitude reached
             if self.check_altitude_reached():
-                rospy.loginfo(f"Target altitude {self.target_altitude}m reached!")
+                rospy.loginfo(f"[Takeoff Controller] Target altitude {self.target_altitude}m reached!")
                 self.takeoff_complete = True
                 self.offboard_enabled = True
                 
                 # Hold position for 2 seconds to stabilize
-                rospy.loginfo("Stabilizing at target altitude...")
+                rospy.loginfo("[Takeoff Controller] Stabilizing at target altitude...")
                 stabilize_start = time.time()
                 while time.time() - stabilize_start < 2.0:
                     self.send_position_setpoint(0, 0, self.target_altitude)
@@ -189,16 +191,16 @@ class TakeoffController:
             
             # Check timeout
             if time.time() - start_time > takeoff_timeout:
-                rospy.logerr("Takeoff timeout!")
+                rospy.logerr("[Takeoff Controller] Takeoff timeout!")
                 return False
             
             # Check if still armed and in offboard
             if not self.current_state.armed:
-                rospy.logerr("Vehicle disarmed during takeoff!")
+                rospy.logerr("[Takeoff Controller] Vehicle disarmed during takeoff!")
                 return False
             
             if self.current_state.mode != "OFFBOARD":
-                rospy.logerr("Lost OFFBOARD mode during takeoff!")
+                rospy.logerr("[Takeoff Controller] Lost OFFBOARD mode during takeoff!")
                 return False
             
             rate.sleep()
@@ -208,7 +210,7 @@ class TakeoffController:
     def maintain_altitude(self):
         """Maintain current altitude and position"""
         if not self.takeoff_complete:
-            rospy.logwarn("Takeoff not complete, cannot maintain altitude")
+            rospy.logwarn("[Takeoff Controller] Takeoff not complete, cannot maintain altitude")
             return
         
         current_x = self.current_pose.pose.position.x
@@ -218,25 +220,25 @@ class TakeoffController:
 
     def emergency_land(self):
         """Emergency landing procedure"""
-        rospy.logwarn("Initiating emergency landing...")
+        rospy.logwarn("[Takeoff Controller] Initiating emergency landing...")
         
         land_mode = SetMode()
         land_mode.custom_mode = 'LAND'
         
         if self.set_mode_client.call(land_mode).mode_sent:
-            rospy.loginfo("LAND mode set")
+            rospy.loginfo("[Takeoff Controller] LAND mode set")
             self.takeoff_complete = False
             self.offboard_enabled = False
         else:
-            rospy.logerr("Failed to set LAND mode")
+            rospy.logerr("[Takeoff Controller] Failed to set LAND mode")
 
 def main():
     try:
         controller = TakeoffController()
         
-        rospy.loginfo("Starting takeoff sequence...")
+        rospy.loginfo("[Takeoff Controller] Starting takeoff sequence...")
         if controller.takeoff_sequence():
-            rospy.loginfo("Takeoff completed successfully!")
+            rospy.loginfo("[Takeoff Controller] Takeoff completed successfully!")
             
             # Keep the node alive and maintain position
             rate = rospy.Rate(20)
@@ -244,10 +246,10 @@ def main():
                 controller.maintain_altitude()
                 rate.sleep()
         else:
-            rospy.logerr("Takeoff failed!")
+            rospy.logerr("[Takeoff Controller] Takeoff failed!")
             
     except rospy.ROSInterruptException:
-        rospy.loginfo("Takeoff controller interrupted")
+        rospy.loginfo("[Takeoff Controller] Takeoff controller interrupted")
     except Exception as e:
         rospy.logerr(f"Takeoff controller error: {e}")
 

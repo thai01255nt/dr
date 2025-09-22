@@ -60,7 +60,7 @@ class TEBHoverController:
         self.control_thread.daemon = True
         self.control_thread.start()
         
-        rospy.loginfo("TEB Hover Controller initialized")
+        rospy.loginfo("[TEB Controller] TEB Controller initialized")
 
     def state_cb(self, msg):
         self.current_state = msg
@@ -103,7 +103,7 @@ class TEBHoverController:
                 self.teb_active = True
                 self.hovering = False
                 self.publish_status("GOAL_ACTIVE")
-                rospy.loginfo("New goal activated")
+                rospy.loginfo("[TEB Controller] New goal activated")
                 
         elif latest_status.status == GoalStatus.SUCCEEDED:
             if self.is_goal_active:
@@ -112,7 +112,7 @@ class TEBHoverController:
                 self.teb_active = False
                 self.start_hovering()
                 self.publish_status("GOAL_REACHED")
-                rospy.loginfo("Goal reached successfully!")
+                rospy.loginfo("[TEB Controller] Goal reached successfully!")
                 
         elif latest_status.status in [GoalStatus.ABORTED, GoalStatus.REJECTED, GoalStatus.PREEMPTED]:
             if self.is_goal_active:
@@ -120,7 +120,7 @@ class TEBHoverController:
                 self.teb_active = False
                 self.start_hovering()
                 self.publish_status(f"GOAL_{latest_status.status}")
-                rospy.logwarn(f"Goal ended with status: {latest_status.status}")
+                rospy.logwarn(f"[TEB Controller] Goal ended with status: {latest_status.status}")
 
     def goal_cb(self, msg):
         """Handle new goal"""
@@ -129,7 +129,7 @@ class TEBHoverController:
         self.goal_reached = False
         self.teb_active = True
         self.hovering = False
-        rospy.loginfo(f"New goal received: ({self.goal_pose.pose.position.x:.2f}, {self.goal_pose.pose.position.y:.2f})")
+        rospy.loginfo(f"[TEB Controller] New goal received: ({self.goal_pose.pose.position.x:.2f}, {self.goal_pose.pose.position.y:.2f})")
 
     def result_cb(self, msg):
         """Handle move_base result"""
@@ -158,7 +158,7 @@ class TEBHoverController:
             self.goal_reached_pub.publish(goal_reached_msg)
             
             self.publish_status("HOVERING")
-            rospy.loginfo(f"Started hovering at position: ({self.hover_position.pose.position.x:.2f}, {self.hover_position.pose.position.y:.2f}, {self.hover_position.pose.position.z:.2f})")
+            rospy.loginfo(f"[TEB Controller] Started hovering at position: ({self.hover_position.pose.position.x:.2f}, {self.hover_position.pose.position.y:.2f}, {self.hover_position.pose.position.z:.2f})")
 
     def send_hover_setpoint(self):
         """Send position setpoint to maintain hover"""
@@ -188,11 +188,11 @@ class TEBHoverController:
                 mode_cmd.custom_mode = 'OFFBOARD'
                 
                 if self.set_mode_client.call(mode_cmd).mode_sent:
-                    rospy.loginfo("Switched back to OFFBOARD mode")
+                    rospy.loginfo("[TEB Controller] Switched back to OFFBOARD mode")
                 else:
-                    rospy.logwarn("Failed to switch to OFFBOARD mode")
+                    rospy.logwarn("[TEB Controller] Failed to switch to OFFBOARD mode")
             except Exception as e:
-                rospy.logerr(f"Error setting OFFBOARD mode: {e}")
+                rospy.logerr(f"[TEB Controller] Error setting OFFBOARD mode: {e}")
 
     def publish_status(self, status):
         """Publish controller status"""
@@ -205,7 +205,7 @@ class TEBHoverController:
         if self.teb_active and time.time() - self.last_cmd_vel_time > self.cmd_vel_timeout:
             # TEB hasn't sent commands for a while, assume goal reached
             if self.is_goal_active:
-                rospy.loginfo("TEB timeout detected - assuming goal reached")
+                rospy.loginfo("[TEB Controller] TEB timeout detected - assuming goal reached")
                 self.goal_reached = True
                 self.start_hovering()
             return True
@@ -216,7 +216,7 @@ class TEBHoverController:
         if (self.teb_active and 
             self.zero_velocity_count >= self.zero_velocity_threshold and
             self.is_goal_active):
-            rospy.loginfo("Zero velocity detected - assuming goal reached")
+            rospy.loginfo("[TEB Controller] Zero velocity detected - assuming goal reached")
             self.goal_reached = True
             self.start_hovering()
             return True
@@ -254,13 +254,13 @@ class TEBHoverController:
                     self.send_zero_velocity()
                     
             except Exception as e:
-                rospy.logerr(f"Control loop error: {e}")
+                rospy.logerr(f"[TEB Controller] Control loop error: {e}")
                 
             rate.sleep()
 
     def emergency_stop(self):
         """Emergency stop - hover at current position"""
-        rospy.logwarn("Emergency stop activated!")
+        rospy.logwarn("[TEB Controller] Emergency stop activated!")
         self.is_goal_active = False
         self.teb_active = False
         self.start_hovering()
@@ -270,16 +270,16 @@ def main():
     try:
         controller = TEBHoverController()
         
-        rospy.loginfo("TEB Hover Controller running...")
-        rospy.loginfo("Monitoring TEB planner and managing hover behavior")
+        rospy.loginfo("[TEB Controller] TEB Hover Controller running...")
+        rospy.loginfo("[TEB Controller] Monitoring TEB planner and managing hover behavior")
         
         # Keep the node alive
         rospy.spin()
         
     except rospy.ROSInterruptException:
-        rospy.loginfo("TEB Hover Controller interrupted")
+        rospy.loginfo("[TEB Controller] TEB Hover Controller interrupted")
     except Exception as e:
-        rospy.logerr(f"TEB Hover Controller error: {e}")
+        rospy.logerr(f"[TEB Controller] TEB Hover Controller error: {e}")
 
 if __name__ == '__main__':
     main()
