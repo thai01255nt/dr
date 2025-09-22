@@ -1,0 +1,7 @@
+<launch>
+  <!-- MAVROS -->
+  <include file="$(find mavros)/launch/px4.launch">
+      <arg name="fcu_url" value="udp://:14540@"/>
+  </include>
+  <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
+</launch>
