@@ -182,7 +182,7 @@
   <!-- Goal Hover Manager - luôn chạy -->
   <node pkg="cart_teb_test" type="goal_hover_manager.py" name="goal_hover_manager" output="screen"/>
   <!-- RViz -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz"  unless="$(eval not arg('start_rviz'))>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz" unless="$(eval not arg('start_rviz'))">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
