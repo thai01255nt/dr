@@ -73,11 +73,15 @@ class TakeoffController:
         pose.pose.position.y = y
         pose.pose.position.z = z
         
-        # Keep current orientation
-        pose.pose.orientation.x = 0
-        pose.pose.orientation.y = 0
-        pose.pose.orientation.z = 0
-        pose.pose.orientation.w = 1
+        # Preserve current orientation to avoid locking yaw
+        if hasattr(self.current_pose.pose, 'orientation'):
+            pose.pose.orientation = self.current_pose.pose.orientation
+        else:
+            # Fallback: neutral orientation
+            pose.pose.orientation.x = 0
+            pose.pose.orientation.y = 0
+            pose.pose.orientation.z = 0
+            pose.pose.orientation.w = 1
         
         self.local_pos_pub.publish(pose)
 
