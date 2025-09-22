@@ -20,22 +20,31 @@
         args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
 
-  <!-- Cartographer Node -->
-  <node name="cartographer_node" pkg="cartographer_ros"
-        type="cartographer_node" args="
-          -configuration_directory $(find cart_teb_test)/config
-          -configuration_basename drone_2d.lua">
-    <remap from="scan" to="/scan"/>
-    <remap from="imu" to="/mavros/imu/data"/>
-    <remap from="fix" to="/mavros/global_position/global"/>
+  <!-- Takeoff Manager - check altitude trước khi start các node khác -->
+  <node pkg="cart_teb_test" type="takeoff_manager.py" name="takeoff_manager" output="screen">
+    <param name="required_altitude" value="2.0"/>  <!-- X meters -->
+    <param name="tolerance" value="0.3"/>
   </node>
-  <!-- Occupancy Grid (map_server) -->
-  <node name="cartographer_occupancy_grid_node"
-        pkg="cartographer_ros"
-        type="cartographer_occupancy_grid_node"
-        args="-resolution 0.05" output="screen"/>
-  <!-- Delay start move_base để đợi Cartographer tạo map và transforms -->
-  <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true" launch-prefix="bash -c 'sleep 30; $0 $@' ">
+  <group>
+    <!-- Cartographer Node -->
+    <node name="cartographer_node" pkg="cartographer_ros"
+          type="cartographer_node" args="
+            -configuration_directory $(find cart_teb_test)/config
+            -configuration_basename drone_2d.lua"
+          unless="$(eval not arg('start_cartographer'))">
+      <remap from="scan" to="/scan"/>
+      <remap from="imu" to="/mavros/imu/data"/>
+      <remap from="fix" to="/mavros/global_position/global"/>
+    </node>
+    <!-- Occupancy Grid (map_server) -->
+    <node name="cartographer_occupancy_grid_node"
+          pkg="cartographer_ros"
+          type="cartographer_occupancy_grid_node"
+          args="-resolution 0.05" output="screen"
+          unless="$(eval not arg('start_cartographer'))"/>
+    <!-- Delay start move_base để đợi Cartographer tạo map và transforms -->
+  </group>
+  <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true" unless="$(eval not arg('start_move_base'))">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
@@ -96,6 +105,9 @@
         feasibility_check_no_poses: false
         publish_feedback: true
         controller_frequency: 10.0
+        xy_goal_tolerance: 0.2        # 20cm
+        yaw_goal_tolerance: 0.1       # ~5.7 độ
+        free_goal_vel: false          # false = dừng hẳn tại goal
       # Global Costmap for GlobalPlanner - uses /map
       global_costmap:
         global_frame: map
@@ -167,6 +179,18 @@
             transform_tolerance: 0.5        # Transform timeout
     </rosparam>
   </node>
-  <node pkg="cart_teb_test" type="publish_init_pose.py" name="init_pose_pub" output="screen"/>
+  <!-- Goal Hover Manager - luôn chạy -->
+  <node pkg="cart_teb_test" type="goal_hover_manager.py" name="goal_hover_manager" output="screen"/>
+  <!-- RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz"  unless="$(eval not arg('start_rviz'))>
+    <remap from="scan" to="/scan"/>
+    <remap from="imu" to="/mavros/imu/data"/>
+    <remap from="fix" to="/mavros/global_position/global"/>
+  </node>
+
+  <!-- Arguments để control việc start node -->
+  <arg name="start_cartographer" default="false"/>
+  <arg name="start_move_base" default="false"/>
+  <arg name="start_rviz" default="false"/>
 </launch>
 

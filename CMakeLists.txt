@@ -14,7 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package()
 catkin_install_python(PROGRAMS
-  scripts/publish_init_pose.py
+  scripts/takeoff_manager.py
+  scripts/goal_hover_manager.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 include_directories(

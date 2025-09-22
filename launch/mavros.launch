@@ -4,4 +4,15 @@
       <arg name="fcu_url" value="udp://:14540@"/>
   </include>
   <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
+  <!-- Tự động set origin khi có GPS -->
+  <rosparam param="/mavros/global_position">
+    tf:
+        send: true
+        frame_id: "map"
+        child_frame_id: "base_link"
+        global_frame_id: "earth"
+    gp_origin:
+        auto_set: true        # Tự động set origin
+        auto_set_timeout: 30  # Timeout 30 giây
+  </rosparam>
 </launch>
