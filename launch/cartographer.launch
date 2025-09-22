@@ -1,0 +1,14 @@
+<launch>
+  <node name="cartographer_node" pkg="cartographer_ros"
+        type="cartographer_node" args="
+          -configuration_directory $(find cart_teb_test)/config
+          -configuration_basename drone_2d.lua">
+    <remap from="scan" to="/scan"/>
+    <remap from="imu" to="/mavros/imu/data"/>
+    <remap from="fix" to="/mavros/global_position/global"/>
+  </node>
+  <node name="cartographer_occupancy_grid_node"
+        pkg="cartographer_ros"
+        type="cartographer_occupancy_grid_node"
+        args="-resolution 0.05" output="screen"/>
+</launch>

@@ -14,8 +14,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package()
 catkin_install_python(PROGRAMS
-  scripts/takeoff_manager.py
-  scripts/goal_hover_manager.py
+  scripts/takeoff_controller.py
+  scripts/autonomous_flight_manager.py
+  scripts/teb_hover_controller.py
+  scripts/emergency_controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 include_directories(

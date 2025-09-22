@@ -2,7 +2,7 @@
   <!-- RViz -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz">
     <remap from="scan" to="/scan"/>
-    <remap from="imu" to="/imu"/>
+    <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
   </node>
 </launch>
