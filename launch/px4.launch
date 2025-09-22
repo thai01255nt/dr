@@ -26,9 +26,5 @@
       <arg name="verbose" value="true"/>
       <arg name="debug" value="true"/>
   </include>
-  <!-- MAVROS -->
-  <include file="$(find mavros)/launch/px4.launch">
-      <arg name="fcu_url" value="udp://:14540@"/>
-  </include>
 </launch>
 

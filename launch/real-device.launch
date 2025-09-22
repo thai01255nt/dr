@@ -20,6 +20,11 @@
         args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
 
+  <!-- MAVROS -->
+  <include file="$(find mavros)/launch/px4.launch">
+      <arg name="fcu_url" value="udp://:14540@"/>
+  </include>
+  <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
   <!-- Cartographer Node -->
   <node name="cartographer_node" pkg="cartographer_ros"
         type="cartographer_node" args="
