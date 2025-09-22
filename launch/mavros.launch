@@ -2,12 +2,13 @@
   <!-- MAVROS -->
   <include file="$(find mavros)/launch/px4.launch">
       <arg name="fcu_url" value="udp://:14540@"/>
+      <arg name="tf" value="false"/>   <!-- tắt tf plugin -->
   </include>
   <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
   <!-- Tự động set origin khi có GPS -->
   <rosparam param="/mavros/global_position">
     tf:
-        send: true
+        send: false
         frame_id: "map"
         child_frame_id: "base_link"
         global_frame_id: "earth"
