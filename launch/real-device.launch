@@ -1,7 +1,7 @@
 <launch>
 <!-- base_link -> imu_link -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_imu"
-        args="0 0 0 0 0 0 base_link imu_link" />
+        args="0 0 0.02 0 0 0 base_link imu_link" />
   
   <!-- base_link -> lidar_link -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_lidar"
@@ -13,7 +13,7 @@
   
   <!-- base_link -> gps_link -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_gps"
-        args="-0.05 0 0.03 0 0 0 base_link gps_link" />
+        args="0.05 0 0.04 0 0 0 base_link gps_link" />
   
   <!-- base_link -> camera_link (quay xuống) -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_camera"
@@ -53,107 +53,57 @@
     <param name="tf_buffer_duration" value="30.0"/>
 
     <rosparam>
-      TebLocalPlannerROS:
-        # 2D holonomic motion - realistic drone limits
-        max_vel_x: 0.8
-        max_vel_y: 0.8
-        max_vel_theta: 0.6
-        acc_lim_x: 0.4
-        acc_lim_y: 0.4
-        acc_lim_theta: 0.4
+      # teb_local_planner_params.yaml
+    TebLocalPlannerROS:
+      odom_topic: "/odom"                 # REMAP nếu bạn dùng mavros (/mavros/local_position/odom) hoặc pose
+      map_frame: "map"
+      robot_frame: "base_link"
+      # planning
+      max_global_plan_lookahead_dist: 8.0
+      global_plan_viapoint_sep: 0.5
+      max_local_plan_lookahead_dist: 4.0
+      feasibility_check_no_poses: false
+      # holonomic (Iris can strafe => allow holonomic behavior)
+      odom_use_init_vel: true
+      allow_init_with_backwards_motion: false
+      # robot kinematics (tune to Iris capabilities)
+      max_vel_x: 1.5          # m/s (tune theo khả năng drone)
+      max_vel_x_backwards: 0.8
+      max_vel_y: 1.5          # allow strafing
+      max_vel_theta: 1.0      # rad/s (yaw speed)
+      acc_lim_x: 2.0          # m/s^2
+      acc_lim_y: 2.0
+      acc_lim_theta: 2.0
+      min_turning_radius: 0.0
+      # trajectory sampling and optimization
+      dt_ref: 0.3
+      dt_hysteresis: 0.1
+      teb_autosize: true
+      dt_obst: 0.05
+      # weights (favor safety & smoothness)
+      weight_kinematics_nh: 1000.0
+      weight_kinematics_forward_drive: 2.0
+      weight_kinematics_turning_radius: 1.0
+      weight_obstacle: 50.0
+      weight_dynamic_obstacle: 50.0
+      weight_viapoint: 1.0
+      weight_goal_distance: 3.0
+      weight_path_distance: 1.5
+      weight_optimaltime: 1.0
+      # obstacles
+      min_obstacle_dist: 0.25      # min distance to obstacle (m) - set > robot radius
+      include_costmap_obstacles: true
+      costmap_obstacles_behind_robot_dist: 1.0
+      obstacle_poses_affected: 30
+      # footprint (not used by teb directly; but keep consistent)
+      footprint_model: "circular"
+      footprint_circular_radius: 0.30   # m : Iris body + safety margin
+      # recovery/constraints
+      feasibility_check_no_poses: false
+      # controller frequency
+      publish_feedback: true
+      controller_frequency: 10.0
 
-        # Drone footprint - square drone 0.6x0.6m
-        footprint_model:
-          type: "polygon"
-          vertices: [[-0.3, -0.3], [0.3, -0.3], [0.3, 0.3], [-0.3, 0.3]]
-
-        # Goal tolerance
-        xy_goal_tolerance: 0.3
-        yaw_goal_tolerance: 0.2
-
-        # Obstacle avoidance - adjusted for 0.6x0.6m drone
-        min_obstacle_dist: 0.5
-        inflation_dist: 0.8
-        dynamic_obstacle_inflation_dist: 0.8
-        include_dynamic_obstacles: true
-        include_costmap_obstacles: true
-        costmap_obstacles_behind_robot_dist: 1.5
-        obstacle_poses_affected: 15
-
-        # Trajectory planning 2D
-        teb_autosize: true
-        dt_ref: 0.3
-        dt_hysteresis: 0.1
-        max_samples: 500
-        global_plan_overwrite_orientation: true
-        allow_init_with_backwards_motion: false
-        max_global_plan_lookahead_dist: 3.0
-        global_plan_viapoint_sep: -1
-        global_plan_prune_distance: 1
-        exact_arc_length: false
-        feasibility_check_no_poses: 5
-        publish_feedback: false
-
-        # Robot - consistent with above limits
-        max_vel_x_backwards: 0.3
-        max_vel_theta: 0.6
-        acc_lim_x: 0.4
-        acc_lim_y: 0.4
-        acc_lim_theta: 0.4
-        min_turning_radius: 0.0
-        wheelbase: 0.0
-        cmd_angle_instead_rotvel: false
-
-        # Weights
-        weight_max_vel_x: 2
-        weight_max_vel_y: 2
-        weight_max_vel_theta: 1
-        weight_acc_lim_x: 1
-        weight_acc_lim_y: 1
-        weight_acc_lim_theta: 1
-        weight_kinematics_nh: 1000
-        weight_kinematics_forward_drive: 1
-        weight_kinematics_turning_radius: 1
-        weight_optimaltime: 1
-        weight_shortest_path: 0
-        weight_obstacle: 100
-        weight_inflation: 0.2
-        weight_dynamic_obstacle: 10
-        weight_dynamic_obstacle_inflation: 0.2
-        weight_viapoint: 1
-        weight_adapt_factor: 2
-
-        # Homotopy Class Planner
-        enable_homotopy_class_planning: true
-        enable_multithreading: true
-        simple_exploration: false
-        max_number_classes: 4
-        selection_cost_hysteresis: 1.0
-        selection_prefer_initial_plan: 0.9
-        selection_obst_cost_scale: 100.0
-        selection_alternative_time_cost: false
-        roadmap_graph_no_samples: 15
-        roadmap_graph_area_width: 5
-        roadmap_graph_area_length_scale: 1.0
-        h_signature_prescaler: 0.5
-        h_signature_threshold: 0.1
-        obstacle_keypoint_offset: 0.1
-        obstacle_heading_threshold: 0.45
-        switching_blocking_period: 0.0
-        viapoints_all_candidates: true
-        delete_detours_backwards: true
-        max_ratio_detours_duration_best_duration: 3.0
-        visualize_hc_graph: false
-        visualize_with_time_as_z_axis_scale: false
-
-        # Recovery
-        shrink_horizon_backup: true
-        shrink_horizon_min_duration: 10
-        oscillation_recovery: true
-        oscillation_v_eps: 0.1
-        oscillation_omega_eps: 0.1
-        oscillation_recovery_min_duration: 10
-        oscillation_filter_duration: 10
 
       # Global Costmap for GlobalPlanner - uses /map
       global_costmap:
