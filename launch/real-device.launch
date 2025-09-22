@@ -25,7 +25,7 @@
     <param name="tolerance" value="0.2"/>
   </node>
   <!-- Goal Hover Manager - Duy trì OFFBOARD khi đạt goal -->  
-  <node pkg="cart_teb_test" type="goal_hover_manager.py" name="goal_hover_manager" output="screen"/
+  <node pkg="cart_teb_test" type="goal_hover_manager.py" name="goal_hover_manager" output="screen"/>
   <group>
     <!-- Cartographer Node -->
     <node name="cartographer_node" pkg="cartographer_ros"
