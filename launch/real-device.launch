@@ -17,7 +17,7 @@
   
   <!-- base_link -> camera_link (quay xuống) -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_camera"
-        args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />aunch>
+        args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
 
   <!-- Cartographer Node -->
