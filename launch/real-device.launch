@@ -20,18 +20,19 @@
         args="0 0 -0.1 -1.5708 0 0 base_link camera_link" />
     <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map" />
 
-  <!-- Takeoff Manager - check altitude trước khi start các node khác -->
   <node pkg="cart_teb_test" type="takeoff_manager.py" name="takeoff_manager" output="screen">
-    <param name="required_altitude" value="2.0"/>  <!-- X meters -->
-    <param name="tolerance" value="0.3"/>
+    <param name="required_altitude" value="1.0"/>  <!-- 1m -->
+    <param name="tolerance" value="0.2"/>
   </node>
+  <!-- Goal Hover Manager - Duy trì OFFBOARD khi đạt goal -->  
+  <node pkg="cart_teb_test" type="goal_hover_manager.py" name="goal_hover_manager" output="screen"/
   <group>
     <!-- Cartographer Node -->
     <node name="cartographer_node" pkg="cartographer_ros"
           type="cartographer_node" args="
             -configuration_directory $(find cart_teb_test)/config
             -configuration_basename drone_2d.lua"
-          unless="$(eval not arg('start_cartographer'))">
+            launch-prefix="bash -c 'rosparam get /takeoff_manager/altitude_reached 2>/dev/null | grep -q True || (echo Waiting for stable altitude...; while ! rosparam get /takeoff_manager/altitude_reached 2>/dev/null | grep -q True; do sleep 1; done); $0 $@'">
       <remap from="scan" to="/scan"/>
       <remap from="imu" to="/mavros/imu/data"/>
       <remap from="fix" to="/mavros/global_position/global"/>
@@ -41,10 +42,11 @@
           pkg="cartographer_ros"
           type="cartographer_occupancy_grid_node"
           args="-resolution 0.05" output="screen"
-          unless="$(eval not arg('start_cartographer'))"/>
+          launch-prefix="bash -c 'rosparam get /takeoff_manager/altitude_reached 2>/dev/null | grep -q True || (echo Waiting for stable altitude...; while ! rosparam get /takeoff_manager/altitude_reached 2>/dev/null | grep -q True; do sleep 1; done); $0 $@'"/>
     <!-- Delay start move_base để đợi Cartographer tạo map và transforms -->
   </group>
-  <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true" unless="$(eval not arg('start_move_base'))">
+  <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true"
+    launch-prefix="bash -c 'rostopic echo /map -n1 >/dev/null 2>&1 || (echo Waiting for map...; rostopic echo /map -n1 >/dev/null); $0 $@'">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
@@ -179,18 +181,12 @@
             transform_tolerance: 0.5        # Transform timeout
     </rosparam>
   </node>
-  <!-- Goal Hover Manager - luôn chạy -->
-  <node pkg="cart_teb_test" type="goal_hover_manager.py" name="goal_hover_manager" output="screen"/>
   <!-- RViz -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz" unless="$(eval not arg('start_rviz'))">
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cart_teb_test)/config/drone.rviz"
+    launch-prefix="bash -c 'rostopic echo /move_base/status -n1 >/dev/null 2>&1 || (echo Waiting for move_base...; rostopic echo /move_base/status -n1 >/dev/null); $0 $@'">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
   </node>
-
-  <!-- Arguments để control việc start node -->
-  <arg name="start_cartographer" default="false"/>
-  <arg name="start_move_base" default="false"/>
-  <arg name="start_rviz" default="false"/>
 </launch>
 
