@@ -4,7 +4,7 @@ import rospy
 import time
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from mavros_msgs.msg import State, ExtendedState
-from mavros_msgs.srv import CommandBool, CommandTOL, SetMode
+from mavros_msgs.srv import CommandBoolRequest, CommandTOL, SetMode, CommandBool
 from sensor_msgs.msg import NavSatFix
 import threading
 
@@ -104,7 +104,7 @@ class TakeoffController:
     def arm_vehicle(self):
         """Arm the vehicle"""
         if not self.current_state.armed:
-            arm_cmd = CommandBool()
+            arm_cmd = CommandBoolRequest()
             arm_cmd.value = True
             
             if self.arming_client.call(arm_cmd).success:

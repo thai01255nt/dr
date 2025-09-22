@@ -8,7 +8,7 @@ from nav_msgs.msg import Path
 from actionlib_msgs.msg import GoalStatusArray, GoalStatus
 from move_base_msgs.msg import MoveBaseActionGoal, MoveBaseActionResult
 from mavros_msgs.msg import State
-from mavros_msgs.srv import SetMode
+from mavros_msgs.srv import SetMode, SetModeRequest
 from std_msgs.msg import String, Bool
 import math
 
@@ -184,7 +184,7 @@ class TEBHoverController:
         """Ensure drone stays in OFFBOARD mode"""
         if not self.offboard_mode_active:
             try:
-                mode_cmd = SetMode()
+                mode_cmd = SetModeRequest()
                 mode_cmd.custom_mode = 'OFFBOARD'
                 
                 if self.set_mode_client.call(mode_cmd).mode_sent:
