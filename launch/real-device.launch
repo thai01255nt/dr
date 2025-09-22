@@ -66,21 +66,18 @@
         # holonomic (Iris can strafe => allow holonomic behavior)
         odom_use_init_vel: true
         allow_init_with_backwards_motion: false
-        # robot kinematics (tune to Iris capabilities)
-        max_vel_x: 1.5          # m/s (tune theo khả năng drone)
+        max_vel_x: 1.5
         max_vel_x_backwards: 0.8
-        max_vel_y: 1.5          # allow strafing
-        max_vel_theta: 1.0      # rad/s (yaw speed)
-        acc_lim_x: 2.0          # m/s^2
+        max_vel_y: 1.5
+        max_vel_theta: 1.0
+        acc_lim_x: 2.0
         acc_lim_y: 2.0
         acc_lim_theta: 2.0
         min_turning_radius: 0.0
-        # trajectory sampling and optimization
         dt_ref: 0.3
         dt_hysteresis: 0.1
         teb_autosize: true
         dt_obst: 0.05
-        # weights (favor safety & smoothness)
         weight_kinematics_nh: 1000.0
         weight_kinematics_forward_drive: 2.0
         weight_kinematics_turning_radius: 1.0
@@ -90,21 +87,15 @@
         weight_goal_distance: 3.0
         weight_path_distance: 1.5
         weight_optimaltime: 1.0
-        # obstacles
-        min_obstacle_dist: 0.25      # min distance to obstacle (m) - set > robot radius
+        min_obstacle_dist: 0.25
         include_costmap_obstacles: true
         costmap_obstacles_behind_robot_dist: 1.0
         obstacle_poses_affected: 30
-        # footprint (not used by teb directly; but keep consistent)
         footprint_model: "circular"
-        footprint_circular_radius: 0.30   # m : Iris body + safety margin
-        # recovery/constraints
+        footprint_circular_radius: 0.30
         feasibility_check_no_poses: false
-        # controller frequency
         publish_feedback: true
         controller_frequency: 10.0
-
-
       # Global Costmap for GlobalPlanner - uses /map
       global_costmap:
         global_frame: map
