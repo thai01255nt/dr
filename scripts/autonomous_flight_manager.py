@@ -201,23 +201,23 @@ class AutonomousFlightManager:
             if not self.execute_takeoff_and_hover():
                 rospy.logerr("Takeoff failed! Aborting sequence.")
                 return False
-            # Step 2: Launch Cartographer
-            if not self.launch_cartographer():
-                rospy.logerr("Cartographer launch failed! Aborting sequence.")
-                return False
-            # Step 3: Wait for map
-            if not self.wait_for_map():
-                rospy.logerr("Map generation failed! Aborting sequence.")
-                return False
-            # Step 4: Launch move_base and rviz
-            if not self.launch_movebase_and_rviz():
-                rospy.logerr("Navigation stack launch failed! Aborting sequence.")
-                return False
-            # Step 5: Launch TEB controller
-            if not self.launch_teb_controller():
-                rospy.logerr("TEB controller launch failed! Aborting sequence.")
-                return False
-            # Step 6: System ready
+            # # Step 2: Launch Cartographer
+            # if not self.launch_cartographer():
+            #     rospy.logerr("Cartographer launch failed! Aborting sequence.")
+            #     return False
+            # # Step 3: Wait for map
+            # if not self.wait_for_map():
+            #     rospy.logerr("Map generation failed! Aborting sequence.")
+            #     return False
+            # # Step 4: Launch move_base and rviz
+            # if not self.launch_movebase_and_rviz():
+            #     rospy.logerr("Navigation stack launch failed! Aborting sequence.")
+            #     return False
+            # # Step 5: Launch TEB controller
+            # if not self.launch_teb_controller():
+            #     rospy.logerr("TEB controller launch failed! Aborting sequence.")
+            #     return False
+            # # Step 6: System ready
             rospy.loginfo("=== System Ready! You can now set goals in RViz ===")
             # Keep the manager alive
             rate = rospy.Rate(1)
