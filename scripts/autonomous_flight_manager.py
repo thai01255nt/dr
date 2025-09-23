@@ -213,10 +213,10 @@ class AutonomousFlightManager:
             # if not self.launch_movebase_and_rviz():
             #     rospy.logerr("Navigation stack launch failed! Aborting sequence.")
             #     return False
-            # # Step 5: Launch TEB controller
-            # if not self.launch_teb_controller():
-            #     rospy.logerr("TEB controller launch failed! Aborting sequence.")
-            #     return False
+            # Step 5: Launch TEB controller
+            if not self.launch_teb_controller():
+                rospy.logerr("TEB controller launch failed! Aborting sequence.")
+                return False
             # # Step 6: System ready
             rospy.loginfo("=== System Ready! You can now set goals in RViz ===")
             # Keep the manager alive

@@ -1,20 +1,4 @@
 <launch>
-  <node pkg="laser_filters" type="scan_to_scan_filter_chain"
-        name="laser_filter" output="screen">
-    <rosparam>
-      scan_filter_chain:
-      - name: range_filter
-        type: laser_filters/LaserScanRangeFilter
-        params:
-          use_message_range_limits: false
-          lower_threshold: 0.5       # Min 15cm - drone body
-          upper_threshold: 30.0        # Max 8m
-          lower_replacement_value: -.inf
-          upper_replacement_value: .inf
-    </rosparam>
-    <remap from="scan" to="/scan"/>
-    <remap from="scan_filtered" to="/scan_filtered"/>
-  </node>
   <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
@@ -43,25 +27,25 @@
         # Global planning parameters
         max_global_plan_lookahead_dist: 8.0        # Increased for better path preview
         global_plan_viapoint_sep: 0.5              # Via points every 50cm
-        global_plan_overwrite_orientation: true    # Allow orientation optimization
+        global_plan_overwrite_orientation: false    # Allow orientation optimization
         max_global_plan_lookahead_dist: 5.0        # Lookahead for local planning
         
         # Robot kinematics - Holonomic drone
-        max_vel_x: 1                             # Reduced for safety with unstable GPS
-        max_vel_x_backwards: 0.5                   # Slower backwards
-        max_vel_y: 1                             # Lateral velocity for holonomic
+        max_vel_x: 0.8                             # Reduced for safety with unstable GPS
+        max_vel_x_backwards: 0.8                   # Slower backwards
+        max_vel_y: 0.8                             # Lateral velocity for holonomic
         max_vel_theta: 0.4                         # Reduced rotation speed
         
-        acc_lim_x: 1.2                             # Smoother acceleration
-        acc_lim_y: 1.2
-        acc_lim_theta: 0.6
+        acc_lim_x: 1.25                             # Smoother acceleration
+        acc_lim_y: 1.25
+        acc_lim_theta: 1
         
         min_turning_radius: 0.0                    # Holonomic - can turn in place
         wheelbase: 0.0                             # Not a car-like robot
         
         # Trajectory parameters
-        xy_goal_tolerance: 0.20                    # 20cm tolerance at goal
-        yaw_goal_tolerance: 0.15                   # ~8.5 degrees
+        xy_goal_tolerance: 0.3                    # 20cm tolerance at goal
+        yaw_goal_tolerance: 3.15                   # ~8.5 degrees
         free_goal_vel: false                       # Stop at goal
         
         # Obstacle parameters - CRITICAL for 30cm clearance
@@ -82,18 +66,18 @@
         
         # Optimization weights - tuned for safety
         weight_kinematics_nh: 1000                 # High weight for holonomic constraints
-        weight_kinematics_forward_drive: 1         # Allow omnidirectional
-        weight_kinematics_turning_radius: 1
-        weight_optimaltime: 1                    # Balance speed and safety
-        weight_shortest_path: 0.5
-        weight_obstacle: 200.0                     # HIGH priority for obstacle avoidance
+        weight_kinematics_forward_drive: 0         # Allow omnidirectional
+        weight_kinematics_turning_radius: 0
+        weight_optimaltime: 1.5                    # Balance speed and safety
+        weight_shortest_path: 1
+        weight_obstacle: 100.0                     # HIGH priority for obstacle avoidance
         weight_inflation: 10.0                      # Consider inflation zones
-        weight_dynamic_obstacle: 200.0             # Same priority for dynamic obstacles
-        weight_viapoint: 5.0                      # Follow global path
+        weight_dynamic_obstacle: 100.0             # Same priority for dynamic obstacles
+        weight_viapoint: 10.0                      # Follow global path
         weight_adapt_factor: 2.0
         
         # Parallel planning (better performance)
-        enable_homotopy_class_planning: true
+        enable_homotopy_class_planning: false
         enable_multithreading: true
         max_number_classes: 4
         selection_cost_hysteresis: 1.0
