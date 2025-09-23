@@ -23,20 +23,20 @@
         map_frame: "map"
         robot_frame: "base_link"
         # planning
-        max_global_plan_lookahead_dist: 8.0
-        global_plan_viapoint_sep: 0.5
-        max_local_plan_lookahead_dist: 4.0
+        max_global_plan_lookahead_dist: 6.0
+        global_plan_viapoint_sep: 0.4
+        max_local_plan_lookahead_dist: 3.0
         feasibility_check_no_poses: false
         # holonomic (Iris can strafe => allow holonomic behavior)
         odom_use_init_vel: true
         allow_init_with_backwards_motion: false
-        max_vel_x: 1.5
-        max_vel_x_backwards: 0.8
-        max_vel_y: 1.5
-        max_vel_theta: 1.0
-        acc_lim_x: 2.0
-        acc_lim_y: 2.0
-        acc_lim_theta: 2.0
+        max_vel_x: 1
+        max_vel_x_backwards: 0.5
+        max_vel_y: 1
+        max_vel_theta: 0.8
+        acc_lim_x: 1.5
+        acc_lim_y: 1.5
+        acc_lim_theta: 1.0
         min_turning_radius: 0.0
         dt_ref: 0.3
         dt_hysteresis: 0.1
@@ -51,16 +51,16 @@
         weight_goal_distance: 3.0
         weight_path_distance: 1.5
         weight_optimaltime: 1.0
-        min_obstacle_dist: 0.25
+        min_obstacle_dist: 0.2
         include_costmap_obstacles: true
-        costmap_obstacles_behind_robot_dist: 1.0
+        costmap_obstacles_behind_robot_dist: 0.5
         obstacle_poses_affected: 30
         footprint_model: "circular"
         footprint_circular_radius: 0.15
         feasibility_check_no_poses: false
         publish_feedback: true
         controller_frequency: 10.0
-        xy_goal_tolerance: 0.2        # 20cm
+        xy_goal_tolerance: 0.15        # 20cm
         yaw_goal_tolerance: 0.1       # ~5.7 độ
         free_goal_vel: false          # false = dừng hẳn tại goal
       # Global Costmap for GlobalPlanner - uses /map
@@ -96,7 +96,7 @@
         lethal_cost: 253
         unknown_cost_value: 255
         publish_potential: false
-        default_tolerance: 0.5
+        default_tolerance: 0.3
       local_costmap:
         global_frame: odom
         robot_base_frame: base_link

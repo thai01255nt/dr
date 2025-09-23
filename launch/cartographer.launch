@@ -6,6 +6,7 @@
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
+    <remap from="/odometry/filtered" to="/mavros/local_position/odom"/>
   </node>
   <node name="cartographer_occupancy_grid_node"
         pkg="cartographer_ros"

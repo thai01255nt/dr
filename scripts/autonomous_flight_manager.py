@@ -70,7 +70,6 @@ class AutonomousFlightManager:
                         rospy.loginfo(f"Takeoff complete at altitude: {current_alt:.2f}m")
                         # Give some time to stabilize
                         time.sleep(5)
-                        takeoff_process.terminate()
                         return True
                 time.sleep(0.5)
             if takeoff_process.poll() is None:

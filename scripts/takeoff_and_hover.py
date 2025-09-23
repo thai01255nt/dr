@@ -34,6 +34,8 @@ class TakeoffHoverController:
     def teb_status_cb(self, msg):
         self.current_teb_status = msg
         self.hovering = (msg.data == "HOVERING")
+        if not self.hovering:
+            rospy.loginfo("[takeoff] Hovering stopped")
 
     def state_cb(self, msg):
         self.current_state = msg
@@ -89,7 +91,7 @@ class TakeoffHoverController:
         """Send position setpoint"""
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = "base_link"
+        pose.header.frame_id = "map"
         pose.pose.position.x = 0
         pose.pose.position.y = 0
         pose.pose.position.z = target_altitude
