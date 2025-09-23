@@ -16,7 +16,7 @@ class TakeoffHoverController:
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.state_cb)
         self.local_pose_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.pose_cb)
-        self.teb_status_sub = rospy.Publisher('/teb_controller/status', String, self.teb_status_cb)
+        self.teb_status_sub = rospy.Subscriber('/teb_controller/status', String, self.teb_status_cb)
         # Service clients
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
@@ -179,6 +179,7 @@ class TakeoffHoverController:
         current_orientation_y = self.current_pose.pose.orientation.y
         current_orientation_z = self.current_pose.pose.orientation.z
         while not rospy.is_shutdown() and self.hovering:
+            rospy.loginfo(f"[Hover] Hovering at {current_x:.2f}, {current_y:.2f}, {current_z:.2f}")
             pose = PoseStamped()
             pose.header.stamp = rospy.Time.now()
             pose.header.frame_id = "map"
