@@ -29,8 +29,6 @@ class AutonomousFlightManager:
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.state_cb)
         self.map_sub = rospy.Subscriber('/map', OccupancyGrid, self.map_cb)
         self.pose_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.pose_cb)
-        # Publishers for status
-        self.status_pub = rospy.Publisher('/flight_manager/status', String, queue_size=10)
         # Current position
         self.current_pose = PoseStamped()
         rospy.loginfo("Autonomous Flight Manager initialized")
@@ -54,16 +52,8 @@ class AutonomousFlightManager:
         self.shutdown_all_processes()
         sys.exit(0)
 
-    def publish_status(self, status):
-        """Publish current status"""
-        msg = String()
-        msg.data = status
-        self.status_pub.publish(msg)
-        rospy.loginfo(f"Status: {status}")
-
     def execute_takeoff_and_hover(self):
         """Execute takeoff using takeoff_controller"""
-        self.publish_status("STARTING_TAKEOFF")
         try:
             # Launch takeoff controller
             rospy.loginfo("Starting takeoff sequence...")
@@ -77,7 +67,6 @@ class AutonomousFlightManager:
                     current_alt = self.current_pose.pose.position.z
                     if 0.9 <= current_alt <= 1.1 and self.drone_state.mode == "OFFBOARD":
                         self.takeoff_complete = True
-                        self.publish_status("TAKEOFF_COMPLETE")
                         rospy.loginfo(f"Takeoff complete at altitude: {current_alt:.2f}m")
                         # Give some time to stabilize
                         time.sleep(5)
@@ -98,7 +87,6 @@ class AutonomousFlightManager:
         if self.cartographer_launched:
             return True
         try:
-            self.publish_status("LAUNCHING_CARTOGRAPHER")
             rospy.loginfo("Launching Cartographer...")
             self.cartographer_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'cartographer.launch'])
             time.sleep(5)
@@ -115,7 +103,6 @@ class AutonomousFlightManager:
 
     def wait_for_map(self, timeout=30):
         """Wait for map to be published by Cartographer"""
-        self.publish_status("WAITING_FOR_MAP")
         rospy.loginfo("Waiting for map from Cartographer...")
         start_time = time.time()
         rate = rospy.Rate(10)
@@ -132,7 +119,6 @@ class AutonomousFlightManager:
         try:
             # Launch move_base
             if not self.movebase_launched:
-                self.publish_status("LAUNCHING_MOVE_BASE")
                 rospy.loginfo("Launching move_base...")
                 self.movebase_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'move_base.launch'])
                 time.sleep(3)
@@ -144,7 +130,6 @@ class AutonomousFlightManager:
                     return False
             # Launch rviz
             if not self.rviz_launched:
-                self.publish_status("LAUNCHING_RVIZ")
                 rospy.loginfo("Launching rviz...")
                 self.rviz_process = subprocess.Popen(['roslaunch', 'cart_teb_test', 'rviz.launch'])
                 time.sleep(2)
@@ -162,7 +147,6 @@ class AutonomousFlightManager:
     def launch_teb_controller(self):
         """Launch TEB hover controller"""
         try:
-            self.publish_status("LAUNCHING_TEB_CONTROLLER")
             rospy.loginfo("Launching TEB hover controller...")
             self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'teb_controller.py'])
             time.sleep(2)
@@ -177,7 +161,6 @@ class AutonomousFlightManager:
             return False
     def launch_simple_goal_forwarder(self):
         try:
-            self.publish_status("LAUNCHING_SIMPLE_GOAL_FORWARDER")
             rospy.loginfo("Launching simple goal forwarder...")
             self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'simple_goal_forwarder.py'])
             time.sleep(2)
@@ -216,7 +199,6 @@ class AutonomousFlightManager:
         try:
             rospy.loginfo("=== Starting Autonomous Flight Sequence ===")
             # Step 1: Takeoff to 1m
-            self.publish_status("INIT")
             if not self.execute_takeoff_and_hover():
                 rospy.logerr("Takeoff failed! Aborting sequence.")
                 return False
@@ -237,7 +219,6 @@ class AutonomousFlightManager:
                 rospy.logerr("TEB controller launch failed! Aborting sequence.")
                 return False
             # Step 6: System ready
-            self.publish_status("READY_FOR_GOALS")
             rospy.loginfo("=== System Ready! You can now set goals in RViz ===")
             # Keep the manager alive
             rate = rospy.Rate(1)

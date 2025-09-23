@@ -179,7 +179,6 @@ class TakeoffHoverController:
         current_orientation_y = self.current_pose.pose.orientation.y
         current_orientation_z = self.current_pose.pose.orientation.z
         while not rospy.is_shutdown() and self.hovering:
-            rospy.loginfo(f"[Hover] Hovering at {current_x:.2f}, {current_y:.2f}, {current_z:.2f}")
             pose = PoseStamped()
             pose.header.stamp = rospy.Time.now()
             pose.header.frame_id = "map"
@@ -198,14 +197,14 @@ def main():
         if controller.takeoff_sequence():
             rospy.loginfo("[takeoff] Takeoff completed successfully!")
             controller.hovering = True
-            while True:
-                rate = rospy.Rate(20)
+            rate = rospy.Rate(20)
+            while not rospy.is_shutdown():
                 if controller.hovering:
                     controller.start_hover()
                 rate.sleep()
         rospy.spin()
-    except rospy.ROSInterruptException:
-        rospy.loginfo("[takeoff] interrupted")
+    except rospy.ROSInterruptException as e:
+        rospy.loginfo(f"[takeoff] interrupted with error: {e}")
     except Exception as e:
         rospy.logerr(f"[takeoff] error: {e}")
 

@@ -96,6 +96,7 @@ class TEBController:
 
     def publish_status(self, status):
         """Publish controller status"""
+        rospy.loginfo(f"[TEB Controller] Status: {status}")
         msg = String()
         msg.data = status
         self.status_pub.publish(msg)
