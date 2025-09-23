@@ -179,7 +179,7 @@ class AutonomousFlightManager:
         try:
             self.publish_status("LAUNCHING_SIMPLE_GOAL_FORWARDER")
             rospy.loginfo("Launching simple goal forwarder...")
-            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'simple_goal_fowareder.py'])
+            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'simple_goal_forwarder.py'])
             time.sleep(2)
             if self.teb_controller_process.poll() is None:
                 rospy.loginfo("Simple goal forwarder launched successfully")
