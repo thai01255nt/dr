@@ -1,4 +1,20 @@
 <launch>
+  <node pkg="laser_filters" type="scan_to_scan_filter_chain"
+        name="laser_filter" output="screen">
+    <rosparam>
+      scan_filter_chain:
+      - name: range_filter
+        type: laser_filters/LaserScanRangeFilter
+        params:
+          use_message_range_limits: false
+          lower_threshold: 0.5       # Min 15cm - drone body
+          upper_threshold: 30.0        # Max 8m
+          lower_replacement_value: -.inf
+          upper_replacement_value: .inf
+    </rosparam>
+    <remap from="scan" to="/scan"/>
+    <remap from="scan_filtered" to="/scan_filtered"/>
+  </node>
   <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
@@ -6,132 +22,240 @@
     <remap from="cmd_vel" to="/mavros/setpoint_velocity/cmd_vel_unstamped"/>
     <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
     <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS"/>
-    <param name="controller_frequency" value="10.0"/>
-    <param name="controller_patience" value="15.0"/>
-    <param name="planner_frequency" value="1.0"/>
+    <param name="controller_frequency" value="15.0"/>
+    <param name="controller_patience" value="5.0"/>
+    <param name="planner_frequency" value="2.0"/>
     <param name="planner_patience" value="10.0"/>
     <param name="oscillation_timeout" value="10.0"/>
-    <param name="oscillation_distance" value="0.2"/>
+    <param name="oscillation_distance" value="0.3"/>
     <param name="recovery_behavior_enabled" value="true"/>
     <param name="transform_timeout" value="1.0"/>
     <param name="tf_buffer_duration" value="30.0"/>
+    <param name="use_sim_time" value="true"/>
 
     <rosparam>
-      # teb_local_planner_params.yaml
       TebLocalPlannerROS:
-        odom_topic: "/odom"                 # REMAP nếu bạn dùng mavros (/mavros/local_position/odom) hoặc pose
+        # Topic remapping for PX4/MAVROS
+        odom_topic: "/mavros/local_position/odom"  # PX4 odometry topic
         map_frame: "map"
-        robot_frame: "base_link"
-        # planning
-        max_global_plan_lookahead_dist: 6.0
-        global_plan_viapoint_sep: 0.4
-        max_local_plan_lookahead_dist: 3.0
-        feasibility_check_no_poses: false
-        # holonomic (Iris can strafe => allow holonomic behavior)
-        odom_use_init_vel: true
-        allow_init_with_backwards_motion: false
-        max_vel_x: 1
-        max_vel_x_backwards: 0.5
-        max_vel_y: 1
-        max_vel_theta: 0.8
-        acc_lim_x: 1.5
-        acc_lim_y: 1.5
-        acc_lim_theta: 1.0
-        min_turning_radius: 0.0
-        dt_ref: 0.3
-        dt_hysteresis: 0.1
-        teb_autosize: true
-        dt_obst: 0.05
-        weight_kinematics_nh: 1000.0
-        weight_kinematics_forward_drive: 2.0
-        weight_kinematics_turning_radius: 1.0
-        weight_obstacle: 50.0
-        weight_dynamic_obstacle: 50.0
-        weight_viapoint: 1.0
-        weight_goal_distance: 3.0
-        weight_path_distance: 1.5
-        weight_optimaltime: 1.0
-        min_obstacle_dist: 0.2
+        robot_base_frame: "base_link"
+        
+        # Global planning parameters
+        max_global_plan_lookahead_dist: 8.0        # Increased for better path preview
+        global_plan_viapoint_sep: 0.5              # Via points every 50cm
+        global_plan_overwrite_orientation: true    # Allow orientation optimization
+        max_global_plan_lookahead_dist: 5.0        # Lookahead for local planning
+        
+        # Robot kinematics - Holonomic drone
+        max_vel_x: 1                             # Reduced for safety with unstable GPS
+        max_vel_x_backwards: 0.5                   # Slower backwards
+        max_vel_y: 1                             # Lateral velocity for holonomic
+        max_vel_theta: 0.4                         # Reduced rotation speed
+        
+        acc_lim_x: 1.2                             # Smoother acceleration
+        acc_lim_y: 1.2
+        acc_lim_theta: 0.6
+        
+        min_turning_radius: 0.0                    # Holonomic - can turn in place
+        wheelbase: 0.0                             # Not a car-like robot
+        
+        # Trajectory parameters
+        xy_goal_tolerance: 0.20                    # 20cm tolerance at goal
+        yaw_goal_tolerance: 0.15                   # ~8.5 degrees
+        free_goal_vel: false                       # Stop at goal
+        
+        # Obstacle parameters - CRITICAL for 30cm clearance
+        min_obstacle_dist: 0.5                    # 35cm minimum (30cm + 5cm safety)
+        inflation_dist: 0.60                       # Inflation distance
         include_costmap_obstacles: true
-        costmap_obstacles_behind_robot_dist: 0.5
-        obstacle_poses_affected: 30
-        footprint_model: "circular"
-        footprint_circular_radius: 0.15
-        feasibility_check_no_poses: false
-        publish_feedback: true
-        controller_frequency: 10.0
-        xy_goal_tolerance: 0.15        # 20cm
-        yaw_goal_tolerance: 0.1       # ~5.7 độ
-        free_goal_vel: false          # false = dừng hẳn tại goal
-      # Global Costmap for GlobalPlanner - uses /map
+        costmap_obstacles_behind_robot_dist: 1.0
+        obstacle_poses_affected: 40                # More poses for better obstacle handling
+        
+        # Dynamic obstacle handling
+        include_dynamic_obstacles: true
+        dynamic_obstacle_inflation_dist: 0.35      # Same as static obstacles
+        
+        # Footprint model - circular drone
+        footprint_model:
+          type: "circular"
+          radius: 0.15                             # 15cm radius as specified
+        
+        # Optimization weights - tuned for safety
+        weight_kinematics_nh: 1000                 # High weight for holonomic constraints
+        weight_kinematics_forward_drive: 1         # Allow omnidirectional
+        weight_kinematics_turning_radius: 1
+        weight_optimaltime: 1                    # Balance speed and safety
+        weight_shortest_path: 0.5
+        weight_obstacle: 200.0                     # HIGH priority for obstacle avoidance
+        weight_inflation: 10.0                      # Consider inflation zones
+        weight_dynamic_obstacle: 200.0             # Same priority for dynamic obstacles
+        weight_viapoint: 5.0                      # Follow global path
+        weight_adapt_factor: 2.0
+        
+        # Parallel planning (better performance)
+        enable_homotopy_class_planning: true
+        enable_multithreading: true
+        max_number_classes: 4
+        selection_cost_hysteresis: 1.0
+        selection_prefer_initial_plan: 0.9
+        selection_obst_cost_scale: 100.0           # Prioritize obstacle-free paths
+        selection_viapoint_cost_scale: 1.0
+        roadmap_graph_no_samples: 15
+        roadmap_graph_area_width: 6
+        h_signature_prescaler: 0.5
+        h_signature_threshold: 0.1
+        obstacle_heading_threshold: 0.45
+        
+        # Recovery behaviors
+        shrink_horizon_backup: true
+        shrink_horizon_min_duration: 10
+        oscillation_recovery: true
+        oscillation_v_eps: 0.1
+        oscillation_omega_eps: 0.1
+        oscillation_recovery_min_duration: 10
+        oscillation_filter_duration: 10
+
       global_costmap:
         global_frame: map
         robot_base_frame: base_link
-        update_frequency: 1.0
-        publish_frequency: 0.5
+        update_frequency: 2.0                      # Faster updates for dynamic environment
+        publish_frequency: 1.0
+        static_map: true
         rolling_window: false
-        width: 50.0
-        height: 50.0
-        resolution: 0.1
-        transform_tolerance: 2.0
+        width: 100.0                               # Larger map area
+        height: 100.0
+        resolution: 0.1                             # 10cm resolution
+        transform_tolerance: 1.0                   # More tolerance for GPS instability
+        
+        robot_radius: 0.15                         # 15cm drone radius
+        
         plugins:
-            - {name: static_layer, type: "costmap_2d::StaticLayer"}
-            - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+          - {name: static_layer, type: "costmap_2d::StaticLayer"}
+          - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+          - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+        
         static_layer:
           enabled: true
-          map_topic: /map
+          map_topic: "/map"
           subscribe_to_updates: true
-        inflation_layer:
+        
+        obstacle_layer:
           enabled: true
-          inflation_radius: 0.5
-          cost_scaling_factor: 3.0
-      GlobalPlanner:
-        allow_unknown: true
-        use_dijkstra: true
-        use_quadratic: true
-        use_grid_path: false
-        old_navfn_behavior: true
-        cost_factor: 1.0
-        neutral_cost: 1
-        lethal_cost: 253
-        unknown_cost_value: 255
-        publish_potential: false
-        default_tolerance: 0.3
-      local_costmap:
-        global_frame: odom
-        robot_base_frame: base_link
-        update_frequency: 10.0        # Increased for better real-time response
-        publish_frequency: 5.0        # Publish rate for visualization
-        rolling_window: true          # Rolling window follows robot
-        width: 6.0                    # Larger window for better lookahead
-        height: 6.0
-        resolution: 0.05              # High resolution 5cm
-        transform_tolerance: 0.5      # Tighter tolerance for accuracy
-        plugins:
-            - {name: obstacle_laser, type: "costmap_2d::ObstacleLayer"}
-            - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
-        inflation_layer:
-          enabled: true
-          inflation_radius: 0.5
-          cost_scaling_factor: 3.0
-        obstacle_laser:
-          enabled: true
+          obstacle_range: 6.0                      # Detection range
+          raytrace_range: 8.0                      # Clearing range
+          track_unknown_space: true
           observation_sources: scan
-          track_unkown_space: true
           scan:
             sensor_frame: lidar_link
             data_type: LaserScan
-            topic: scan                    # Real-time lidar for obstacle detection
-            marking: true                   # Mark new obstacles
-            clearing: true                  # Clear free space
-            max_obstacle_height: 3.0        # Height limit for obstacles
+            topic: /scan_filtered
+            marking: true
+            clearing: true
             min_obstacle_height: 0.0
-            obstacle_range: 5.0             # Detection range for obstacles
-            raytrace_range: 8.0             # Range for clearing free space
-            inf_is_valid: true             # Ignore infinite readings
-            expected_update_rate: 10.0      # Expected lidar update rate
-            observation_persistence: 0.0    # How long to keep observations
-            transform_tolerance: 0.5        # Transform timeout
+            max_obstacle_height: 2.0
+            expected_update_rate: 10.0
+            observation_persistence: 0.5           # Keep obstacles for 1 second minimum
+        
+        inflation_layer:
+          enabled: true
+          inflation_radius: 0.50                   # 50cm inflation (30cm clearance + 20cm buffer)
+          cost_scaling_factor: 5.0                 # Aggressive cost scaling
+
+      local_costmap:
+        global_frame: odom
+        robot_base_frame: base_link
+        update_frequency: 15.0                     # High frequency for real-time response
+        publish_frequency: 10.0
+        static_map: false
+        rolling_window: true
+        width: 8.0                                 # 8m x 8m local window
+        height: 8.0
+        resolution: 0.05                           # 5cm resolution for precision
+        transform_tolerance: 0.5
+        
+        robot_radius: 0.15                        # 15cm drone radius
+        
+        plugins:
+          - {name: obstacle_layer, type: "costmap_2d::ObstacleLayer"}
+          - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+        
+        obstacle_layer:
+          enabled: true
+          obstacle_range: 5.0                      # 5m detection range
+          raytrace_range: 6.0                      # 6m clearing range
+          track_unknown_space: true
+          combination_method: 1                    # Max method for safety
+          observation_sources: scan
+          scan:
+            sensor_frame: lidar_link
+            data_type: LaserScan
+            topic: /scan_filtered
+            marking: true
+            clearing: true
+            min_obstacle_height: 0.0
+            max_obstacle_height: 2.0
+            inf_is_valid: true
+            expected_update_rate: 10.0
+            observation_persistence: 0.5           # Keep obstacles for 1 second minimum
+            clearing: true
+            marking: true
+        
+        inflation_layer:
+          enabled: true
+          inflation_radius: 0.50                   # 50cm total (30cm clearance + 20cm buffer)
+          cost_scaling_factor: 10.0                # Aggressive scaling for safety
+
+      GlobalPlanner:
+        allow_unknown: true                        # Navigate through unknown areas
+        default_tolerance: 0.2
+        use_dijkstra: false                       # Use A* for better performance
+        use_quadratic: true
+        use_grid_path: false
+        old_navfn_behavior: false
+        
+        # Cost parameters
+        cost_factor: 0.55
+        neutral_cost: 66
+        lethal_cost: 253
+        unknown_cost_value: 255                    # Treat unknown as obstacle for safety
+        
+        publish_potential: true
+        orientation_mode: 1                        # Forward orientation
+        orientation_window_size: 1
+
+      move_base:
+        controller_frequency: 15.0                 # 15Hz control loop
+        controller_patience: 5.0                   # 5s patience before recovery
+        planner_frequency: 2.0                     # Replan every 0.5s
+        planner_patience: 5.0
+        oscillation_timeout: 10.0
+        oscillation_distance: 0.3
+        
+        # Recovery behaviors
+        recovery_behavior_enabled: true
+        recovery_behaviors:
+          - name: conservative_reset
+            type: clear_costmap_recovery/ClearCostmapRecovery
+          - name: rotate_recovery
+            type: rotate_recovery/RotateRecovery
+          - name: aggressive_reset
+            type: clear_costmap_recovery/ClearCostmapRecovery
+        
+        conservative_reset:
+          reset_distance: 3.0
+          layer_names: ["obstacle_layer"]
+        
+        aggressive_reset:
+          reset_distance: 0.5
+          layer_names: ["obstacle_layer"]
+        
+        rotate_recovery:
+          sim_granularity: 0.017
+          min_rotational_vel: 0.2
+          max_rotational_vel: 0.5
+          acc_lim_theta: 0.8
+
     </rosparam>
   </node>
 </launch>
+
