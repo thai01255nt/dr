@@ -127,11 +127,9 @@ class TakeoffController:
     def takeoff_sequence(self):
         """Execute complete takeoff sequence to 1m altitude"""
         rospy.loginfo("[Takeoff Controller] Starting takeoff sequence...")
-        
         # Wait for connection
         if not self.wait_for_connection():
             return False
-        
         # Send a few setpoints before starting offboard mode
         rospy.loginfo("[Takeoff Controller] Sending initial setpoints...")
         rate = rospy.Rate(20)
@@ -140,12 +138,10 @@ class TakeoffController:
                 return False
             self.send_position_setpoint(0, 0, self.target_altitude)
             rate.sleep()
-        
         # Set OFFBOARD mode
         rospy.loginfo("[Takeoff Controller] Setting OFFBOARD mode...")
         if not self.set_offboard_mode():
             return False
-        
         # Wait for mode to be set
         timeout = time.time() + 5
         while self.current_state.mode != "OFFBOARD" and time.time() < timeout:
@@ -239,11 +235,9 @@ class TakeoffController:
 def main():
     try:
         controller = TakeoffController()
-        
         rospy.loginfo("[Takeoff Controller] Starting takeoff sequence...")
         if controller.takeoff_sequence():
             rospy.loginfo("[Takeoff Controller] Takeoff completed successfully!")
-            
             # Keep the node alive and maintain position
             rate = rospy.Rate(20)
             while not rospy.is_shutdown():
@@ -251,7 +245,6 @@ def main():
                 rate.sleep()
         else:
             rospy.logerr("[Takeoff Controller] Takeoff failed!")
-            
     except rospy.ROSInterruptException:
         rospy.loginfo("[Takeoff Controller] Takeoff controller interrupted")
     except Exception as e:

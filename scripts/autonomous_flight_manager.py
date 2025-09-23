@@ -3,12 +3,10 @@
 import rospy
 import subprocess
 import time
-import threading
 from std_msgs.msg import String
 from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import PoseStamped
 from mavros_msgs.msg import State
-from actionlib_msgs.msg import GoalStatusArray
 import signal
 import sys
 
@@ -63,13 +61,13 @@ class AutonomousFlightManager:
         self.status_pub.publish(msg)
         rospy.loginfo(f"Status: {status}")
 
-    def execute_takeoff(self):
+    def execute_takeoff_and_hover(self):
         """Execute takeoff using takeoff_controller"""
         self.publish_status("STARTING_TAKEOFF")
         try:
             # Launch takeoff controller
             rospy.loginfo("Starting takeoff sequence...")
-            takeoff_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'takeoff_controller.py'])
+            takeoff_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'takeoff_and_hover.py'])
             # Monitor takeoff progress
             timeout = 60  # 60 seconds timeout for takeoff
             start_time = time.time()
@@ -82,7 +80,8 @@ class AutonomousFlightManager:
                         self.publish_status("TAKEOFF_COMPLETE")
                         rospy.loginfo(f"Takeoff complete at altitude: {current_alt:.2f}m")
                         # Give some time to stabilize
-                        time.sleep(3)
+                        time.sleep(5)
+                        takeoff_process.terminate()
                         return True
                 time.sleep(0.5)
             if takeoff_process.poll() is None:
@@ -165,7 +164,7 @@ class AutonomousFlightManager:
         try:
             self.publish_status("LAUNCHING_TEB_CONTROLLER")
             rospy.loginfo("Launching TEB hover controller...")
-            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'teb_hover_controller.py'])
+            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'teb_controller.py'])
             time.sleep(2)
             if self.teb_controller_process.poll() is None:
                 rospy.loginfo("TEB hover controller launched successfully")
@@ -176,6 +175,22 @@ class AutonomousFlightManager:
         except Exception as e:
             rospy.logerr(f"Failed to launch TEB controller: {e}")
             return False
+    def launch_simple_goal_forwarder(self):
+        try:
+            self.publish_status("LAUNCHING_SIMPLE_GOAL_FORWARDER")
+            rospy.loginfo("Launching simple goal forwarder...")
+            self.teb_controller_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'simple_goal_fowareder.py'])
+            time.sleep(2)
+            if self.teb_controller_process.poll() is None:
+                rospy.loginfo("Simple goal forwarder launched successfully")
+                return True
+            else:
+                rospy.logerr("Failed to launch simple goal forwarder")
+                return False
+        except Exception as e:
+            rospy.logerr(f"Failed to launch simple goal forwarder: {e}")
+            return False
+
 
     def shutdown_all_processes(self):
         """Shutdown all launched processes"""
@@ -202,7 +217,7 @@ class AutonomousFlightManager:
             rospy.loginfo("=== Starting Autonomous Flight Sequence ===")
             # Step 1: Takeoff to 1m
             self.publish_status("INIT")
-            if not self.execute_takeoff():
+            if not self.execute_takeoff_and_hover():
                 rospy.logerr("Takeoff failed! Aborting sequence.")
                 return False
             # Step 2: Launch Cartographer
