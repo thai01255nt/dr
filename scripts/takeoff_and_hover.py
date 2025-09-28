@@ -39,7 +39,7 @@ class TakeoffHoverController:
 
     def state_cb(self, msg):
         self.current_state = msg
-        self.offboard_mode_active = (msg.mode == "OFFBOARD")
+        self.offboard_mode_active = (msg.mode == "GUIDED")
 
     def pose_cb(self, msg):
         self.current_pose = msg
@@ -61,9 +61,9 @@ class TakeoffHoverController:
         if not self.current_state.connected:
             rospy.logwarn("[takeoff] Vehicle not connected")
             return False
-        if self.current_state.mode != "OFFBOARD":
+        if self.current_state.mode != "GUIDED":
             try:
-                resp = self.set_mode_client(0, "OFFBOARD")
+                resp = self.set_mode_client(0, "GUIDED")
                 if resp.mode_sent:
                     rospy.loginfo("[takeoff] OFFBOARD mode set")
                     return True
@@ -122,9 +122,9 @@ class TakeoffHoverController:
             return False
         # Wait for mode to be set
         timeout = time.time() + 5
-        while self.current_state.mode != "OFFBOARD" and time.time() < timeout:
+        while self.current_state.mode != "GUIDED" and time.time() < timeout:
             rate.sleep()
-        if self.current_state.mode != "OFFBOARD":
+        if self.current_state.mode != "GUIDED":
             rospy.logerr("[takeoff] Failed to enter OFFBOARD mode")
             return False
         # Arm vehicle
@@ -162,7 +162,7 @@ class TakeoffHoverController:
             if not self.current_state.armed:
                 rospy.logerr("[takeoff] Vehicle disarmed during takeoff!")
                 return False
-            if self.current_state.mode != "OFFBOARD":
+            if self.current_state.mode != "GUIDED":
                 rospy.logerr("[takeoff] Lost OFFBOARD mode during takeoff!")
                 return False
             rate.sleep()

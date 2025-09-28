@@ -92,7 +92,7 @@ class TakeoffController:
             return False
         if self.current_state.mode != "OFFBOARD":
             try:
-                resp = self.set_mode_client(0, "OFFBOARD")
+                resp = self.set_mode_client(0, "GUIDED")
                 if resp.mode_sent:
                     rospy.loginfo("[Takeoff Controller] OFFBOARD mode set")
                     return True

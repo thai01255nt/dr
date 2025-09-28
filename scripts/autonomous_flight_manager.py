@@ -65,7 +65,7 @@ class AutonomousFlightManager:
                 # Check if altitude reached (1m ± 10cm)
                 if hasattr(self.current_pose.pose.position, 'z'):
                     current_alt = self.current_pose.pose.position.z
-                    if 0.9 <= current_alt <= 1.1 and self.drone_state.mode == "OFFBOARD":
+                    if 0.9 <= current_alt <= 1.1 and self.drone_state.mode == "GUIDED":
                         self.takeoff_complete = True
                         rospy.loginfo(f"Takeoff complete at altitude: {current_alt:.2f}m")
                         # Give some time to stabilize
