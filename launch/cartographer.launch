@@ -20,7 +20,7 @@
         type="cartographer_node" args="
           -configuration_directory $(find cart_teb_test)/config
           -configuration_basename drone_2d.lua">
-    <remap from="scan" to="/scan_filtered"/>
+    <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
     <remap from="odom" to="/mavros/local_position/odom"/>
