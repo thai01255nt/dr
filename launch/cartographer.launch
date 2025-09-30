@@ -1,33 +1,29 @@
 <launch>
-  <node pkg="laser_filters" type="scan_to_scan_filter_chain"
-        name="laser_filter" output="screen">
-    <rosparam>
-      scan_filter_chain:
-      - name: range_filter
-        type: laser_filters/LaserScanRangeFilter
-        params:
-          use_message_range_limits: false
-          lower_threshold: 0.5       # Min 15cm - drone body
-          upper_threshold: 15.        # Max 8m
-          lower_replacement_value: -.inf
-          upper_replacement_value: .inf
-    </rosparam>
-    <remap from="scan" to="/scan"/>
-    <remap from="scan_filtered" to="/scan_filtered"/>
-  </node>
-
+  <arg name="use_gps" default="true"/>
+  <!-- Config file phụ thuộc arg -->
+  <arg if="$(arg use_gps)" name="config_basename" value="drone_2d.lua"/>
+  <arg unless="$(arg use_gps)" name="config_basename" value="drone_2d_non_gps.lua"/>
   <node name="cartographer_node" pkg="cartographer_ros"
-        type="cartographer_node" args="
-          -configuration_directory $(find cart_teb_test)/config
-          -configuration_basename drone_2d.lua">
+        type="cartographer_node"
+        args="-configuration_directory $(find cart_teb_test)/config
+              -configuration_basename $(arg config_basename)">
     <remap from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
     <remap from="odom" to="/mavros/local_position/odom"/>
     <param name="use_sim_time" value="false"/>
   </node>
+
   <node name="cartographer_occupancy_grid_node"
         pkg="cartographer_ros"
         type="cartographer_occupancy_grid_node"
         args="-resolution 0.05" output="screen"/>
+  <node name="robot_pose_publisher"
+    pkg="robot_pose_publisher"
+    type="robot_pose_publisher"
+    respawn="false"
+    output="screen" >
+    <param name="is_stamped" type="bool" value="true"/>
+    <remap from="robot_pose" to="/mavros/vision_pose/pose" />
+  </node>
 </launch>

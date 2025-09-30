@@ -9,6 +9,12 @@
     <include>
       <uri>model://ground_plane</uri>
     </include>
+    <!-- Iris model cho ArduPilot -->
+    <include>
+      <uri>model://iris_with_ardupilot</uri>
+      <name>iris_demo</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
 
     <!-- Obstacle 1: Red box -->
     <model name="red_box">

@@ -1,0 +1,21 @@
+# hybrid_params.txt
+AHRS_EKF_TYPE 3
+EK2_ENABLE 0
+EK3_ENABLE 1
+
+# Primary source: GPS
+EK3_SRC1_POSXY 3
+EK3_SRC1_VELXY 3
+EK3_SRC1_YAW 1
+
+# Secondary source: ExternalNav (backup)
+EK3_SRC2_POSXY 6
+EK3_SRC2_VELXY 6
+EK3_SRC2_YAW 6
+
+# Cả GPS và VO đều BẬT
+GPS1_TYPE 1
+VISO_TYPE 1
+
+# Arming check bình thường
+ARMING_CHECK 1

@@ -1,0 +1,11 @@
+AHRS_EKF_TYPE 3
+EK2_ENABLE 0
+EK3_ENABLE 1
+EK3_SRC1_POSXY 3        # GPS
+EK3_SRC1_POSZ 1         # Barometer
+EK3_SRC1_VELXY 3        # GPS
+EK3_SRC1_VELZ 3         # GPS
+EK3_SRC1_YAW 1          # Compass
+GPS1_TYPE 1             # GPS BẬT (1=Auto, 2=uBlox, 5=NMEA)
+VISO_TYPE 0             # Visual Odometry TẮT
+ARMING_CHECK 1          # Tất cả checks (bao gồm GPS)

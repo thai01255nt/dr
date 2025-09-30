@@ -10,8 +10,8 @@ options = {
 	odom_frame = "odom",
 	provide_odom_frame = true,
 	publish_frame_projected_to_2d = true,
-	use_odometry = true,
-	use_nav_sat = true,
+	use_odometry = false,
+	use_nav_sat = false,
 	use_landmarks = false,
 	num_laser_scans = 1,
 	num_multi_echo_laser_scans = 0,
@@ -29,13 +29,11 @@ options = {
 }
 
 MAP_BUILDER.use_trajectory_builder_2d = true
-
 TRAJECTORY_BUILDER_2D.min_range = 0.1
 TRAJECTORY_BUILDER_2D.max_range = 30.0
 TRAJECTORY_BUILDER_2D.use_imu_data = true
 TRAJECTORY_BUILDER_2D.voxel_filter_size = 0.03
-
+TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 2
 POSE_GRAPH.optimization_problem.huber_scale = 1e2
 POSE_GRAPH.optimize_every_n_nodes = 20
-
 return options
