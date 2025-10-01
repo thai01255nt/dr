@@ -19,6 +19,18 @@ param5: 0.0
 param6: 0.0
 param7: 0.0"
 
+rosservice call /mavros/cmd/command "broadcast: false
+command: 179
+confirmation: 0
+param1: 1.0
+param2: 0.0
+param3: 0.0
+param4: 0.0
+param5: 0.0
+param6: 0.0
+param7: 0.0"
+rosrun mavros mavcmd long 179 0 0 0 0 0 0 0
+
 rosservice call /mavros/cmd/set_home "current_gps: true
 latitude: 0.0
 longitude: 0.0
@@ -33,7 +45,7 @@ export ROS_IP=192.168.123.112
 source /opt/ros/noetic/setup.bash
 source catkin_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
-export ROS_MASTER_URI=http://192.168.123.129:11311
+export ROS_MASTER_URI=http://192.168.123.112:11311
 export ROS_IP=192.168.123.129
 
 ```

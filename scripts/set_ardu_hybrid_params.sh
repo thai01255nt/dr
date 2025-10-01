@@ -1,5 +1,5 @@
 #!/bin/bash
-rosrun mavros mavparam load ardu_hybrid_params.txt
+rosrun mavros mavparam load ardu_hybrid.param
 rosservice call /mavros/param/push
 rosservice call /mavros/cmd/command "command: 246
 param1: 1.0
