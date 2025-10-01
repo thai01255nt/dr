@@ -119,6 +119,10 @@ gazebo --verbose worlds/iris_arducopter_runway.world
 source /opt/ros/noetic/setup.bash
 source catkin_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
-sim_vehicle.py -v ArduCopter -f gazebo-iris --map --console --out ($ROS_IP):14540
+source /usr/share/gazebo/setup.sh
+export GAZEBO_MODEL_PATH=~/ardupilot_gazebo/models
+export GAZEBO_RESOURCE_PATH=~/ardupilot_gazebo/worlds:${GAZEBO_RESOURCE_PATH}
+sim_vehicle.py -v ArduCopter -f gazebo-iris --map --console --out 127.0.0.1:14550
 roslaunch cart_teb_test ardupilot.launch
+roslaunch cart_teb_test mavros.launch fcu_url:="udp://:14550@127.0.0.1:14550"
 ```
