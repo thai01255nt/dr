@@ -1,8 +1,8 @@
 rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
-param1: 26 # message_id (ATTITUDE_QUATERNION)
-param2: 100000 # interval_us (10Hz)
+param1: 26 # message_id (HIGHRES_IMU)
+param2: 20000 # interval_us (100Hz)
 param3: 0.0
 param4: 0.0
 param5: 0.0
@@ -12,7 +12,7 @@ rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
 param1: 31 # message_id (ATTITUDE_QUATERNION)
-param2: 100000 # interval_us (10Hz)
+param2: 20000 # interval_us (50Hz)
 param3: 0.0
 param4: 0.0
 param5: 0.0
@@ -20,21 +20,44 @@ param6: 0.0
 param7: 0.0"
 
 rosservice call /mavros/cmd/command "broadcast: false
-command: 179
+command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
-param1: 1.0
+param1: 105 # message_id (HIGHRES_IMU)
+param2: 10000 # interval_us (100Hz)
+param3: 0.0
+param4: 0.0
+param5: 0.0
+param6: 0.0
+param7: 0.0"
+rosservice call /mavros/cmd/command "broadcast: false
+command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
+confirmation: 0
+param1: 31 # message_id (ATTITUDE_QUATERNION)
+param2: 10000 # interval_us (50Hz)
+param3: 0.0
+param4: 0.0
+param5: 0.0
+param6: 0.0
+param7: 0.0"
+
+# for non-gps-ardu
+
+rosservice call /mavros/cmd/command "broadcast: false
+command: 48
+confirmation: 0
+param1: 0.0
 param2: 0.0
 param3: 0.0
 param4: 0.0
 param5: 0.0
 param6: 0.0
 param7: 0.0"
-rosrun mavros mavcmd long 179 0 0 0 0 0 0 0
 
-rosservice call /mavros/cmd/set_home "current_gps: true
-latitude: 0.0
-longitude: 0.0
-altitude: 0.0"
+# local position
+
+rosservice call /mavros/set_stream_rate "stream_id: 6
+message_rate: 20
+on_off: true"
 
 source /opt/ros/noetic/setup.bash
 source slam_ws/devel_isolated/setup.bash
@@ -90,4 +113,12 @@ first time to install sitl and gazebo classic
 ```
 sim_vehicle.py -v ArduCopter -f gazebo-iris --map --console
 gazebo --verbose worlds/iris_arducopter_runway.world
+```
+
+```
+source /opt/ros/noetic/setup.bash
+source catkin_ws/devel_isolated/setup.bash
+source cart_teb_test/devel/setup.bash
+sim_vehicle.py -v ArduCopter -f gazebo-iris --map --console --out ($ROS_IP):14540
+roslaunch cart_teb_test ardupilot.launch
 ```

@@ -36,4 +36,5 @@ TRAJECTORY_BUILDER_2D.voxel_filter_size = 0.03
 TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 2
 POSE_GRAPH.optimization_problem.huber_scale = 1e2
 POSE_GRAPH.optimize_every_n_nodes = 20
+TRAJECTORY_BUILDER_2D.imu_gravity_time_constant = 2
 return options

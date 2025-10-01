@@ -1,19 +1,45 @@
 <launch>
-  <!-- MAVROS -->
+  <!-- Args -->
+  <arg name="firmware" default="ardupilot"/>  <!-- "px4" hoặc "ardupilot" -->
   <arg name="fcu_url" default="/dev/ttyACM0:115200"/>
-  <include file="$(find mavros)/launch/px4.launch">
+  <arg name="use_gps" default="true"/>        <!-- true: dùng GPS thật, false: fake GPS -->
+
+  <!-- PX4 case -->
+  <group if="$(eval arg('firmware') == 'px4')">
+    <include file="$(find mavros)/launch/px4.launch">
       <arg name="fcu_url" value="$(arg fcu_url)"/>
-  </include>
+        <!-- Global position params -->
+        <rosparam param="/mavros/global_position">
+          tf:
+            send: false
+            frame_id: "map"
+            child_frame_id: "base_link"
+            global_frame_id: "earth"
+          gp_origin:
+            auto_set: true
+            auto_set_timeout: 30
+        </rosparam>
+    </include>
+  </group>
+
+  <!-- ArduPilot case -->
+  <group if="$(eval arg('firmware') == 'ardupilot')">
+    <include file="$(find mavros)/launch/apm.launch">
+      <arg name="fcu_url" value="$(arg fcu_url)"/>
+    </include>
+  </group>
+
+  <!-- Common params -->
   <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
-  <!-- Tự động set origin khi có GPS -->
-  <rosparam param="/mavros/global_position">
-    tf:
-        send: false
-        frame_id: "map"
-        child_frame_id: "base_link"
-        global_frame_id: "earth"
-    gp_origin:
-        auto_set: true        # Tự động set origin
-        auto_set_timeout: 30  # Timeout 30 giây
-  </rosparam>
+
+
+  <!-- Fake GPS node: chỉ bật nếu ArduPilot + không có GPS -->
+  <group if="$(eval arg('firmware') == 'ardupilot' and arg('use_gps') == 'false')">
+    <node pkg="fake_gps" type="fake_gps_node" name="fake_gps" output="screen">
+      <param name="frame_id" value="map"/>
+      <param name="child_frame_id" value="base_link"/>
+      <param name="rate" value="30.0"/>
+    </node>
+  </group>
+
 </launch>
