@@ -7,6 +7,8 @@ from mavros_msgs.msg import State
 from mavros_msgs.srv import SetMode, CommandBool, CommandBoolRequest
 from std_msgs.msg import String
 
+AUTO_CONTROL_MODE = "GUIDED_NOGPS"
+
 class TakeoffHoverController:
     def __init__(self):
         rospy.init_node('takeoff_hover_controller', anonymous=True)
@@ -39,7 +41,7 @@ class TakeoffHoverController:
 
     def state_cb(self, msg):
         self.current_state = msg
-        self.offboard_mode_active = (msg.mode == "GUIDED")
+        self.offboard_mode_active = (msg.mode == AUTO_CONTROL_MODE)
 
     def pose_cb(self, msg):
         self.current_pose = msg
@@ -61,9 +63,9 @@ class TakeoffHoverController:
         if not self.current_state.connected:
             rospy.logwarn("[takeoff] Vehicle not connected")
             return False
-        if self.current_state.mode != "GUIDED":
+        if self.current_state.mode != AUTO_CONTROL_MODE:
             try:
-                resp = self.set_mode_client(0, "GUIDED")
+                resp = self.set_mode_client(0, AUTO_CONTROL_MODE)
                 if resp.mode_sent:
                     rospy.loginfo("[takeoff] OFFBOARD mode set")
                     return True
@@ -122,9 +124,9 @@ class TakeoffHoverController:
             return False
         # Wait for mode to be set
         timeout = time.time() + 5
-        while self.current_state.mode != "GUIDED" and time.time() < timeout:
+        while self.current_state.mode != AUTO_CONTROL_MODE and time.time() < timeout:
             rate.sleep()
-        if self.current_state.mode != "GUIDED":
+        if self.current_state.mode != AUTO_CONTROL_MODE:
             rospy.logerr("[takeoff] Failed to enter OFFBOARD mode")
             return False
         # Arm vehicle
@@ -162,7 +164,7 @@ class TakeoffHoverController:
             if not self.current_state.armed:
                 rospy.logerr("[takeoff] Vehicle disarmed during takeoff!")
                 return False
-            if self.current_state.mode != "GUIDED":
+            if self.current_state.mode != AUTO_CONTROL_MODE:
                 rospy.logerr("[takeoff] Lost OFFBOARD mode during takeoff!")
                 return False
             rate.sleep()

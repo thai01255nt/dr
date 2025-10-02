@@ -10,6 +10,8 @@ from mavros_msgs.msg import State
 import signal
 import sys
 
+AUTO_CONTROL_MODE = "GUIDED_NOGPS"
+
 class AutonomousFlightManager:
     def __init__(self):
         rospy.init_node('autonomous_flight_manager', anonymous=True)
@@ -57,7 +59,7 @@ class AutonomousFlightManager:
         try:
             # Launch takeoff controller
             rospy.loginfo("Starting takeoff sequence...")
-            takeoff_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'takeoff_and_hover.py'])
+            takeoff_process = subprocess.Popen(['rosrun', 'cart_teb_test', 'takeoff_and_hover_ardupilot.py'])
             # Monitor takeoff progress
             timeout = 60  # 60 seconds timeout for takeoff
             start_time = time.time()
@@ -65,7 +67,7 @@ class AutonomousFlightManager:
                 # Check if altitude reached (1m ± 10cm)
                 if hasattr(self.current_pose.pose.position, 'z'):
                     current_alt = self.current_pose.pose.position.z
-                    if 0.9 <= current_alt <= 1.1 and self.drone_state.mode == "GUIDED":
+                    if 0.9 <= current_alt <= 1.1 and self.drone_state.mode == AUTO_CONTROL_MODE:
                         self.takeoff_complete = True
                         rospy.loginfo(f"Takeoff complete at altitude: {current_alt:.2f}m")
                         # Give some time to stabilize
