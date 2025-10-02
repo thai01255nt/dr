@@ -73,6 +73,7 @@ class TakeoffHoverController:
 
     def teb_status_cb(self, msg):
         self.current_teb_status = msg
+        rospy.loginfo("[ArduPilot Takeoff] status: " + msg.data)
         if msg.data == "HOVERING":
             self.hovering = True
         else:
