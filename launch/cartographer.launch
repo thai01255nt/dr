@@ -1,13 +1,37 @@
 <launch>
   <arg name="use_gps" default="true"/>
+  <arg name="use_scan_filter" default="false"/>
+  <node pkg="tf" type="static_transform_publisher" 
+      name="enu_to_ned_transform" 
+      args="0 0 0 1.5708 0 3.14159 map map_ned 100"/>
+  
   <!-- Config file phụ thuộc arg -->
   <arg if="$(arg use_gps)" name="config_basename" value="drone_2d.lua"/>
   <arg unless="$(arg use_gps)" name="config_basename" value="drone_2d_non_gps.lua"/>
+  
+  <!-- Scan filter node - chỉ chạy khi use_scan_filter=true -->
+  <group if="$(arg use_scan_filter)">
+    <node name="scan_filter" pkg="laser_filters" type="scan_to_scan_filter_chain">
+      <rosparam>
+        scan_filter_chain:
+        - name: range
+          type: laser_filters/LaserScanRangeFilter
+          params:
+            lower_threshold: 0.5
+            upper_threshold: 15.0
+      </rosparam>
+      <remap from="scan" to="/scan"/>
+      <remap from="scan_filtered" to="/scan_filtered"/>
+    </node>
+  </group>
+  
   <node name="cartographer_node" pkg="cartographer_ros"
         type="cartographer_node"
         args="-configuration_directory $(find cart_teb_test)/config
               -configuration_basename $(arg config_basename)">
-    <remap from="scan" to="/scan"/>
+    <!-- Scan topic tùy thuộc vào việc có dùng filter hay không -->
+    <remap if="$(arg use_scan_filter)" from="scan" to="/scan_filtered"/>
+    <remap unless="$(arg use_scan_filter)" from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
     <remap from="odom" to="/mavros/local_position/odom"/>
@@ -23,7 +47,10 @@
     type="robot_pose_publisher"
     respawn="false"
     output="screen" >
+    <param name="publish_frequency" type="double" value="50"/>  <!-- 30 Hz cho ArduPilot -->
     <param name="is_stamped" type="bool" value="true"/>
-    <remap from="robot_pose" to="/mavros/vision_pose/pose" />
+    <param name="map_frame" type="string" value="map"/>
+    <param name="base_frame" type="string" value="base_link"/>
+    <remap from="robot_pose" to="/mavros/vision_pose/pose"/>
   </node>
 </launch>

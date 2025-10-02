@@ -1,6 +1,10 @@
 <launch>
+  <arg name="use_scan_filter" default="false"/>
+  
   <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true">
-    <remap from="scan" to="/scan"/>
+    <!-- Scan topic remapping based on filter usage -->
+    <remap if="$(arg use_scan_filter)" from="scan" to="/scan_filtered"/>
+    <remap unless="$(arg use_scan_filter)" from="scan" to="/scan"/>
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
     <remap from="cmd_vel" to="/mavros/setpoint_velocity/cmd_vel_unstamped"/>
@@ -132,7 +136,7 @@
           scan:
             sensor_frame: lidar_link
             data_type: LaserScan
-            topic: /scan
+            topic: scan  # Will be remapped by move_base node
             marking: true
             clearing: true
             min_obstacle_height: 0.0
@@ -173,7 +177,7 @@
           scan:
             sensor_frame: lidar_link
             data_type: LaserScan
-            topic: /scan
+            topic: scan  # Will be remapped by move_base node
             marking: true
             clearing: true
             min_obstacle_height: 0.0

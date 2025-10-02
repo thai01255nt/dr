@@ -42,22 +42,33 @@ param7: 0.0"
 
 # for non-gps-ardu
 
+```
+rostopic pub /mavros/global_position/set_gp_origin geographic_msgs/GeoPointStamped "
+header:
+  stamp: now
+  frame_id: '/map'
+position:
+  latitude: 0.0
+  longitude: 0.0
+  altitude: 0.0" -1
+```
+
+# local position
+
+rosservice call /mavros/set_stream_rate "stream_id: 0
+message_rate: 20
+on_off: true"
+
 rosservice call /mavros/cmd/command "broadcast: false
-command: 48
+command: 511
 confirmation: 0
-param1: 0.0
-param2: 0.0
+param1: 32.0
+param2: 20000
 param3: 0.0
 param4: 0.0
 param5: 0.0
 param6: 0.0
 param7: 0.0"
-
-# local position
-
-rosservice call /mavros/set_stream_rate "stream_id: 6
-message_rate: 20
-on_off: true"
 
 source /opt/ros/noetic/setup.bash
 source slam_ws/devel_isolated/setup.bash

@@ -17,6 +17,7 @@ catkin_install_python(PROGRAMS
   scripts/takeoff_and_hover.py
   scripts/teb_controller.py
   scripts/simple_goal_forwarder.py
+  scripts/takeoff_and_hover_ardupilot.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 include_directories(

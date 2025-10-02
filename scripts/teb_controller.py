@@ -35,7 +35,7 @@ class TEBController:
 
     def state_cb(self, msg):
         self.current_state = msg
-        self.offboard_mode_active = (msg.mode == "OFFBOARD")
+        self.offboard_mode_active = (msg.mode == "GUIDED")
 
     def pose_cb(self, msg):
         self.current_pose = msg

@@ -4,13 +4,14 @@ import rospy
 import time
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from mavros_msgs.msg import State, ExtendedState
-from mavros_msgs.srv import SetMode, CommandBool, CommandBoolRequest, CommandTOL
+from mavros_msgs.srv import SetMode, CommandBool, CommandBoolRequest, CommandTOLRequest, CommandTOL
 from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
 
 # ArduPilot specific flight modes
 GUIDED_MODE = "GUIDED"
-GUIDED_NOGPS_MODE = "GUIDED_NOGPS"
+# GUIDED_NOGPS_MODE = "GUIDED_NOGPS"
+GUIDED_NOGPS_MODE = "GUIDED"
 LAND_MODE = "LAND"
 
 class TakeoffHoverController:
@@ -75,6 +76,7 @@ class TakeoffHoverController:
         if msg.data == "HOVERING":
             self.hovering = True
         else:
+            rospy.loginfo("[ArduPilot Takeoff] Hovering stopped");
             self.hovering = False
 
     def publish_status(self, status):
@@ -150,13 +152,13 @@ class TakeoffHoverController:
     def takeoff_command(self):
         """Send ArduPilot takeoff command"""
         try:
-            takeoff_cmd = CommandTOL()
-            takeoff_cmd.request.min_pitch = 0.0
-            takeoff_cmd.request.yaw = 0.0
-            takeoff_cmd.request.latitude = 0.0  # Use current position
-            takeoff_cmd.request.longitude = 0.0
-            takeoff_cmd.request.altitude = self.takeoff_altitude
-            resp = self.takeoff_client.call(takeoff_cmd.request)
+            takeoff_cmd = CommandTOLRequest()
+            takeoff_cmd.min_pitch = 0.0
+            takeoff_cmd.yaw = 0.0
+            takeoff_cmd.latitude = 0.0  # Use current position
+            takeoff_cmd.longitude = 0.0
+            takeoff_cmd.altitude = self.takeoff_altitude
+            resp = self.takeoff_client.call(takeoff_cmd)
             if resp.success:
                 rospy.loginfo(f"[ArduPilot Takeoff] Takeoff command sent to {self.takeoff_altitude}m")
                 return True
