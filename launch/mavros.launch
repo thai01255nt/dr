@@ -7,6 +7,7 @@
   <group if="$(eval arg('firmware') == 'px4')">
     <include file="$(find mavros)/launch/px4.launch">
       <arg name="fcu_url" value="$(arg fcu_url)"/>
+      <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
         <!-- Global position params -->
         <rosparam param="/mavros/global_position">
           tf:
@@ -25,9 +26,10 @@
   <group if="$(eval arg('firmware') == 'ardupilot')">
     <include file="$(find mavros)/launch/apm.launch">
       <arg name="fcu_url" value="$(arg fcu_url)"/>
+      <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_OFFSET_NED"/>
     </include>
   </group>
 
   <!-- Common params -->
-  <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
+  <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_OFFSET_NED"/>
 </launch>

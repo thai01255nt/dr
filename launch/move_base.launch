@@ -1,5 +1,5 @@
 <launch>
-  <arg name="use_scan_filter" default="false"/>
+  <arg name="use_scan_filter" default="true"/>
   
   <node pkg="move_base" type="move_base" name="move_base" respawn="false" clear_params="true">
     <!-- Scan topic remapping based on filter usage -->

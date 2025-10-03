@@ -1,10 +1,7 @@
 <launch>
   <arg name="use_gps" default="true"/>
-  <arg name="use_scan_filter" default="false"/>
-  <node pkg="tf" type="static_transform_publisher" 
-      name="enu_to_ned_transform" 
-      args="0 0 0 1.5708 0 3.14159 map map_ned 100"/>
-  
+  <arg name="use_scan_filter" default="true"/>
+
   <!-- Config file phụ thuộc arg -->
   <arg if="$(arg use_gps)" name="config_basename" value="drone_2d.lua"/>
   <arg unless="$(arg use_gps)" name="config_basename" value="drone_2d_non_gps.lua"/>
@@ -18,7 +15,7 @@
           type: laser_filters/LaserScanRangeFilter
           params:
             lower_threshold: 0.5
-            upper_threshold: 15.0
+            upper_threshold: 30
       </rosparam>
       <remap from="scan" to="/scan"/>
       <remap from="scan_filtered" to="/scan_filtered"/>
@@ -35,7 +32,7 @@
     <remap from="imu" to="/mavros/imu/data"/>
     <remap from="fix" to="/mavros/global_position/global"/>
     <remap from="odom" to="/mavros/local_position/odom"/>
-    <param name="use_sim_time" value="false"/>
+    <param name="use_sim_time" value="true"/>
   </node>
 
   <node name="cartographer_occupancy_grid_node"

@@ -68,7 +68,7 @@
     </link>
     
     <joint name="base_to_lidar" type="fixed">
-      <parent>iris::base_link</parent>
+      <parent>base_link</parent>
       <child>lidar_link</child>
     </joint>
     
@@ -133,6 +133,6 @@
       </sensor>
     </link>
     <joint name="base_to_camera" type="fixed">
-      <parent>iris::base_link</parent>
+      <parent>base_link</parent>
       <child>camera_link</child>
     </joint>

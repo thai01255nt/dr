@@ -1,3 +1,5 @@
+pip3 install pyzbar
+
 rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
@@ -52,7 +54,6 @@ position:
   longitude: 0.0
   altitude: 0.0" -1
 ```
-
 # gps
 
 rosservice call /mavros/cmd/command "broadcast: false
