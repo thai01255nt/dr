@@ -2,7 +2,6 @@
   <!-- Args -->
   <arg name="firmware" default="ardupilot"/>  <!-- "px4" hoặc "ardupilot" -->
   <arg name="fcu_url" default="/dev/ttyACM0:115200"/>
-  <arg name="use_gps" default="true"/>        <!-- true: dùng GPS thật, false: fake GPS -->
 
   <!-- PX4 case -->
   <group if="$(eval arg('firmware') == 'px4')">
@@ -31,15 +30,4 @@
 
   <!-- Common params -->
   <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_NED"/>
-
-
-  <!-- Fake GPS node: chỉ bật nếu ArduPilot + không có GPS -->
-  <group if="$(eval arg('firmware') == 'ardupilot' and arg('use_gps') == 'false')">
-    <node pkg="fake_gps" type="fake_gps_node" name="fake_gps" output="screen">
-      <param name="frame_id" value="map"/>
-      <param name="child_frame_id" value="base_link"/>
-      <param name="rate" value="30.0"/>
-    </node>
-  </group>
-
 </launch>

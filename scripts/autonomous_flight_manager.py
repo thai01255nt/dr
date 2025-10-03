@@ -10,7 +10,7 @@ from mavros_msgs.msg import State
 import signal
 import sys
 
-AUTO_CONTROL_MODE = "GUIDED_NOGPS"
+AUTO_CONTROL_MODE = "GUIDED"
 
 class AutonomousFlightManager:
     def __init__(self):

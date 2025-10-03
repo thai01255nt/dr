@@ -20,79 +20,45 @@ class TakeoffHoverController:
         # Publishers
         self.local_position_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)
         self.velocity_pub = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=10)
-        self.status_pub = rospy.Publisher('/ardupilot_takeoff/status', String, queue_size=10)
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.state_cb)
         self.local_pose_sub = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.pose_cb)
-        self.extended_state_sub = rospy.Subscriber('/mavros/extended_state', ExtendedState, self.extended_state_cb)
-        self.global_pos_sub = rospy.Subscriber('/mavros/global_position/global', NavSatFix, self.global_pos_cb)
         self.teb_status_sub = rospy.Subscriber('/teb_controller/status', String, self.teb_status_cb)
         # Service clients
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         # State variables
+        self.takeoff_complete = False
+        self.guided_mode_active = False
         self.current_state = State()
         self.current_pose = PoseStamped()
         self.extended_state = ExtendedState()
-        self.global_position = NavSatFix()
         self.current_teb_status = String()
         # Configuration
-        self.takeoff_altitude = 1.0
+        self.takeoff_target_altitude = 1.0
         self.altitude_tolerance = 0.1
-        self.gps_available = False
-        self.use_gps = False
         # Control flags
-        self.takeoff_complete = False
         self.hovering = False
-        self.home_position = None
         rospy.loginfo("[ArduPilot Takeoff] Controller initialized")
-
-    def state_cb(self, msg):
-        self.current_state = msg
-
-    def pose_cb(self, msg):
-        self.current_pose = msg
-        # Store home position when first getting valid pose
-        if self.home_position is None and msg.pose.position.z > -100:  # Valid altitude
-            self.home_position = PoseStamped()
-            self.home_position.header = msg.header
-            self.home_position.pose = msg.pose
-            rospy.loginfo(f"[ArduPilot Takeoff] Home position set: ({msg.pose.position.x:.2f}, {msg.pose.position.y:.2f}, {msg.pose.position.z:.2f})")
-
-    def extended_state_cb(self, msg):
-        self.extended_state = msg
-
-    def global_pos_cb(self, msg):
-        self.global_position = msg
-        # Check GPS availability
-        if msg.status.status >= 0:  # GPS fix available
-            self.gps_available = True
-        else:
-            self.gps_available = False
 
     def teb_status_cb(self, msg):
         self.current_teb_status = msg
-        rospy.loginfo("[ArduPilot Takeoff] status: " + msg.data)
-        if msg.data == "HOVERING":
-            self.hovering = True
-        else:
-            rospy.loginfo("[ArduPilot Takeoff] Hovering stopped");
-            self.hovering = False
+        self.hovering = (msg.data == "HOVERING")
+        if not self.hovering:
+            rospy.loginfo("[takeoff] Hovering stopped")
 
-    def publish_status(self, status):
-        """Publish controller status"""
-        msg = String()
-        msg.data = status
-        self.status_pub.publish(msg)
-        rospy.loginfo(f"[ArduPilot Takeoff] Status: {status}")
+    def state_cb(self, msg):
+        self.current_state = msg
+        self.guided_mode_active = (msg.mode==GUIDED_MODE)
+
+    def pose_cb(self, msg):
+        self.current_pose = msg
 
     def wait_for_mavros_connection(self, timeout=30):
-        """Wait for MAVROS connection"""
         rospy.loginfo("[ArduPilot Takeoff] Waiting for MAVROS connection...")
         rate = rospy.Rate(20)
         start_time = time.time()
-
         while not rospy.is_shutdown() and not self.current_state.connected:
             if time.time() - start_time > timeout:
                 rospy.logerr("[ArduPilot Takeoff] Timeout waiting for MAVROS connection")
@@ -102,23 +68,11 @@ class TakeoffHoverController:
         rospy.loginfo("[ArduPilot Takeoff] MAVROS connected")
         return True
 
-    def check_gps_and_set_mode(self):
-        """Check GPS availability and set appropriate flight mode"""
-        if self.use_gps and self.gps_available:
-            target_mode = GUIDED_MODE
-            rospy.loginfo("[ArduPilot Takeoff] Using GPS-enabled GUIDED mode")
-        else:
-            target_mode = GUIDED_NOGPS_MODE
-            rospy.loginfo("[ArduPilot Takeoff] Using GUIDED_NOGPS mode (no GPS or GPS disabled)")
-
-        return target_mode
-
     def set_guided_mode(self):
-        """Set vehicle to GUIDED or GUIDED_NOGPS mode based on GPS availability"""
         if not self.current_state.connected:
             rospy.logwarn("[ArduPilot Takeoff] Vehicle not connected")
             return False
-        target_mode = self.check_gps_and_set_mode()
+        target_mode = GUIDED_MODE
         if self.current_state.mode != target_mode:
             try:
                 resp = self.set_mode_client(0, target_mode)
@@ -158,10 +112,10 @@ class TakeoffHoverController:
             takeoff_cmd.yaw = 0.0
             takeoff_cmd.latitude = 0.0  # Use current position
             takeoff_cmd.longitude = 0.0
-            takeoff_cmd.altitude = self.takeoff_altitude
+            takeoff_cmd.altitude = self.takeoff_target_altitude
             resp = self.takeoff_client.call(takeoff_cmd)
             if resp.success:
-                rospy.loginfo(f"[ArduPilot Takeoff] Takeoff command sent to {self.takeoff_altitude}m")
+                rospy.loginfo(f"[ArduPilot Takeoff] Takeoff command sent to {self.takeoff_target_altitude}m")
                 return True
             else:
                 rospy.logwarn("[ArduPilot Takeoff] Takeoff command failed")
@@ -170,36 +124,36 @@ class TakeoffHoverController:
             rospy.logerr(f"[ArduPilot Takeoff] Takeoff service failed: {e}")
             return False
 
-    def send_position_setpoint(self, x=None, y=None, z=None):
-        """Send position setpoint for hover control"""
-        pose = PoseStamped()
-        pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = "map"
-        # Use current position if not specified
-        if x is None:
-            x = self.current_pose.pose.position.x
-        if y is None:
-            y = self.current_pose.pose.position.y
-        if z is None:
-            z = self.takeoff_altitude
-        pose.pose.position.x = x
-        pose.pose.position.y = y
-        pose.pose.position.z = z
-        # Maintain current orientation
-        pose.pose.orientation = self.current_pose.pose.orientation
-        self.local_position_pub.publish(pose)
+    # def send_position_setpoint(self, x=None, y=None, z=None):
+    #     """Send position setpoint for hover control"""
+    #     pose = PoseStamped()
+    #     pose.header.stamp = rospy.Time.now()
+    #     pose.header.frame_id = "map"
+    #     # Use current position if not specified
+    #     if x is None:
+    #         x = self.current_pose.pose.position.x
+    #     if y is None:
+    #         y = self.current_pose.pose.position.y
+    #     if z is None:
+    #         z = self.takeoff_altitude
+    #     pose.pose.position.x = x
+    #     pose.pose.position.y = y
+    #     pose.pose.position.z = z
+    #     # Maintain current orientation
+    #     pose.pose.orientation = self.current_pose.pose.orientation
+    #     self.local_position_pub.publish(pose)
 
     def check_altitude_reached(self):
         """Check if target altitude is reached"""
         current_alt = self.current_pose.pose.position.z
-        target_reached = abs(current_alt - self.takeoff_altitude) < self.altitude_tolerance
+        target_reached = abs(current_alt - self.takeoff_target_altitude) < self.altitude_tolerance
         if target_reached:
-            rospy.loginfo(f"[ArduPilot Takeoff] Altitude reached: {current_alt:.2f}m (target: {self.takeoff_altitude}m)")
+            rospy.loginfo(f"[ArduPilot Takeoff] Altitude reached: {current_alt:.2f}m (target: {self.takeoff_target_altitude}m)")
         return target_reached
 
     def wait_for_altitude(self, timeout=60):
         """Wait for drone to reach target altitude"""
-        rospy.loginfo(f"[ArduPilot Takeoff] Waiting for altitude {self.takeoff_altitude}m...")
+        rospy.loginfo(f"[ArduPilot Takeoff] Waiting for altitude {self.takeoff_target_altitude}m...")
         start_time = time.time()
         rate = rospy.Rate(10)
 
@@ -231,7 +185,7 @@ class TakeoffHoverController:
             return False
         rate = rospy.Rate(10)
         timeout = time.time() + 10
-        target_mode = self.check_gps_and_set_mode()
+        target_mode = GUIDED_MODE
         while self.current_state.mode != target_mode and time.time() < timeout:
             rate.sleep()
         if self.current_state.mode != target_mode:
@@ -254,22 +208,49 @@ class TakeoffHoverController:
         rospy.loginfo("[ArduPilot Takeoff] Stabilizing at target altitude...")
         stabilize_start = time.time()
         while time.time() - stabilize_start < 3.0:  # 3 second stabilization
-            self.send_position_setpoint()
+            self.send_taget_takeoff(self.takeoff_target_altitude)
             rate.sleep()
         self.takeoff_complete = True
         rospy.loginfo("[ArduPilot Takeoff] Takeoff sequence completed successfully!")
         return True
 
+    def send_taget_takeoff(self, target_altitude):
+        """Send position setpoint"""
+        pose = PoseStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "map"
+        pose.pose.position.x = 0
+        pose.pose.position.y = 0
+        pose.pose.position.z = target_altitude
+        pose.pose.orientation.x = 0
+        pose.pose.orientation.y = 0
+        pose.pose.orientation.z = 0
+        pose.pose.orientation.w = 1
+        self.local_position_pub.publish(pose)
+
     def start_hover(self):
-        """Maintain hover at current position"""
         if not self.takeoff_complete:
-            rospy.logwarn("[ArduPilot Takeoff] Takeoff not complete, cannot hover")
+            rospy.logwarn("[Hover] Takeoff not complete")
             return
-        rospy.loginfo("[ArduPilot Takeoff] Starting hover control...")
-        self.publish_status("HOVERING")
-        rate = rospy.Rate(20)  # 20Hz position control
-        while not rospy.is_shutdown() and self.current_state.armed and self.hovering:
-            self.send_position_setpoint()
+        rospy.loginfo("[Hover] Hovering...")
+        rate = rospy.Rate(20)
+        current_x = self.current_pose.pose.position.x
+        current_y = self.current_pose.pose.position.y
+        current_z = self.takeoff_target_altitude
+        current_orientation_x = self.current_pose.pose.orientation.x
+        current_orientation_y = self.current_pose.pose.orientation.y
+        current_orientation_z = self.current_pose.pose.orientation.z
+        while not rospy.is_shutdown() and self.hovering:
+            pose = PoseStamped()
+            pose.header.stamp = rospy.Time.now()
+            pose.header.frame_id = "map"
+            pose.pose.position.x = current_x
+            pose.pose.position.y = current_y
+            pose.pose.position.z = current_z
+            pose.pose.orientation.x = current_orientation_x
+            pose.pose.orientation.y = current_orientation_y
+            pose.pose.orientation.z = current_orientation_z
+            self.local_position_pub.publish(pose)
             rate.sleep()
 
 def main():
@@ -277,7 +258,6 @@ def main():
         controller = TakeoffHoverController()
         if controller.takeoff_sequence():
             rospy.loginfo("[takeoff] Takeoff completed successfully!")
-            controller.publish_status("HOVERING")
             controller.hovering = True
             rate = rospy.Rate(20)
             while not rospy.is_shutdown():

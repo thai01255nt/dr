@@ -5,7 +5,7 @@ options = {
 	map_builder = MAP_BUILDER,
 	trajectory_builder = TRAJECTORY_BUILDER,
 	map_frame = "map",
-	tracking_frame = "base_link",
+	tracking_frame = "imu_link",
 	published_frame = "base_link",
 	odom_frame = "odom",
 	provide_odom_frame = true,
@@ -36,5 +36,5 @@ TRAJECTORY_BUILDER_2D.voxel_filter_size = 0.03
 TRAJECTORY_BUILDER_2D.num_accumulated_range_data = 2
 POSE_GRAPH.optimization_problem.huber_scale = 1e2
 POSE_GRAPH.optimize_every_n_nodes = 20
-TRAJECTORY_BUILDER_2D.imu_gravity_time_constant = 2
+TRAJECTORY_BUILDER_2D.imu_gravity_time_constant = 10
 return options

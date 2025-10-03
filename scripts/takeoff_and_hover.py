@@ -7,7 +7,7 @@ from mavros_msgs.msg import State
 from mavros_msgs.srv import SetMode, CommandBool, CommandBoolRequest
 from std_msgs.msg import String
 
-AUTO_CONTROL_MODE = "GUIDED_NOGPS"
+AUTO_CONTROL_MODE = "OFFBOARD"
 
 class TakeoffHoverController:
     def __init__(self):
