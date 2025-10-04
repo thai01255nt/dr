@@ -26,7 +26,8 @@
   <group if="$(eval arg('firmware') == 'ardupilot')">
     <include file="$(find mavros)/launch/apm.launch">
       <arg name="fcu_url" value="$(arg fcu_url)"/>
-      <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_OFFSET_NED"/>
+      <param name="/mavros/setpoint_position/mav_frame" value="BODY_OFFSET"/>
+      <param name="/mavros/setpoint_velocity/mav_frame" value="BODY_OFFSET"/>
     </include>
   </group>
 

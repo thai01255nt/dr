@@ -101,11 +101,15 @@ source cart_teb_test/devel/setup.bash
 export ROS_MASTER_URI=http://192.168.123.112:11311
 export ROS_IP=192.168.123.112
 
+rosrun cart_teb_test qr_code_publisher.py
+
 source /opt/ros/noetic/setup.bash
 source catkin_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
 export ROS_MASTER_URI=http://192.168.123.112:11311
 export ROS_IP=192.168.123.129
+
+rosrun cart_teb_test qr_code_subscriber.py
 
 ```
 .~/cart_teb_test/src/cart_teb_test/scripts/set_ardu_gps_params.sh
