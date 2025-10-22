@@ -24,6 +24,11 @@
   <!-- Optional: for extra IMU/GPS plugins -->
   <depend>hector_gazebo_plugins</depend>
 
+  <!-- Camera and image processing -->
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>camera_info_manager</depend>
+
   <export>
     <build_type>catkin</build_type>
   </export>

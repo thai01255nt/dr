@@ -1,0 +1,53 @@
+<launch>
+    <!-- AirSim Camera Node (C++) for VinsMono -->
+    <!-- Optimized for OrangePi 5 Max: 640x480 @ 20Hz -->
+
+    <arg name="vehicle_name" default="Copter" />
+    <arg name="camera_name" default="0" />
+    <arg name="frame_id" default="camera" />
+
+    <!-- Camera parameters - VGA resolution @ 20Hz for OrangePi 5 Max -->
+    <arg name="frame_rate" default="20" />
+    <arg name="image_width" default="640" />
+    <arg name="image_height" default="480" />
+
+    <!-- Camera intrinsics - IMPORTANT: You MUST calibrate your camera and update these values! -->
+    <!-- These are example values for a typical 640x480 camera -->
+    <!-- Use kalibr or ROS camera_calibration package to get accurate values -->
+    <arg name="fx" default="322.5" />
+    <arg name="fy" default="325" />
+    <arg name="cx" default="325" />
+    <arg name="cy" default="238" />
+
+    <!-- Distortion coefficients (radtan model: k1, k2, p1, p2, k3) -->
+    <arg name="k1" default="-0.151" />
+    <arg name="k2" default="0.0798" />
+    <arg name="p1" default="0.001003" />
+    <arg name="p2" default="0.00102" />
+    <arg name="k3" default="-0.02" />
+
+    <!-- AirSim Camera Node (C++ - Faster than Python) -->
+    <node pkg="cart_teb_test" type="airsim_camera_node" name="airsim_camera_node" output="screen">
+        <param name="vehicle_name" value="$(arg vehicle_name)" />
+        <param name="camera_name" value="$(arg camera_name)" />
+        <param name="frame_id" value="$(arg frame_id)" />
+
+        <param name="frame_rate" value="$(arg frame_rate)" />
+        <param name="image_width" value="$(arg image_width)" />
+        <param name="image_height" value="$(arg image_height)" />
+
+        <!-- Camera intrinsics -->
+        <param name="fx" value="$(arg fx)" />
+        <param name="fy" value="$(arg fy)" />
+        <param name="cx" value="$(arg cx)" />
+        <param name="cy" value="$(arg cy)" />
+
+        <!-- Distortion -->
+        <param name="k1" value="$(arg k1)" />
+        <param name="k2" value="$(arg k2)" />
+        <param name="p1" value="$(arg p1)" />
+        <param name="p2" value="$(arg p2)" />
+        <param name="k3" value="$(arg k3)" />
+    </node>
+
+</launch>

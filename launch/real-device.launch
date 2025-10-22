@@ -1,6 +1,6 @@
 <launch>
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_imu"
-        args="0.056 0 0.028 3.14 0 0 base_link imu_link" />
+        args="0.056 0 0.028 0 0 0 base_link imu_link" />
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_lidar"
         args="0.047 0.002 0.072 0 0 0 base_link lidar_link" />
   <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_base_laser"

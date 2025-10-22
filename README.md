@@ -4,27 +4,6 @@ rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
 param1: 26 # message_id (HIGHRES_IMU)
-param2: 100000 # interval_us (100Hz)
-param3: 0.0
-param4: 0.0
-param5: 0.0
-param6: 0.0
-param7: 0.0"
-rosservice call /mavros/cmd/command "broadcast: false
-command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
-confirmation: 0
-param1: 31 # message_id (ATTITUDE_QUATERNION)
-param2: 100000 # interval_us (50Hz)
-param3: 0.0
-param4: 0.0
-param5: 0.0
-param6: 0.0
-param7: 0.0"
-
-rosservice call /mavros/cmd/command "broadcast: false
-command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
-confirmation: 0
-param1: 105 # message_id (HIGHRES_IMU)
 param2: 0 # interval_us (100Hz)
 param3: 0.0
 param4: 0.0
@@ -42,6 +21,27 @@ param5: 0.0
 param6: 0.0
 param7: 0.0"
 
+rosservice call /mavros/cmd/command "broadcast: false
+command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
+confirmation: 0
+param1: 105 # message_id (HIGHRES_IMU)
+param2: 10000 # interval_us (100Hz)
+param3: 0.0
+param4: 0.0
+param5: 0.0
+param6: 0.0
+param7: 0.0"
+rosservice call /mavros/cmd/command "broadcast: false
+command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
+confirmation: 0
+param1: 31 # message_id (ATTITUDE_QUATERNION)
+param2: 20000 # interval_us (50Hz)
+param3: 0.0
+param4: 0.0
+param5: 0.0
+param6: 0.0
+param7: 0.0"
+
 # for non-gps-ardu
 
 ```
@@ -53,6 +53,16 @@ position:
   latitude: 0.0
   longitude: 0.0
   altitude: 0.0" -1
+
+
+rostopic pub /mavros/global_position/set_gp_origin geographic_msgs/GeoPointStamped "
+header:
+  stamp: now
+  frame_id: 'map'
+position:
+  latitude: -35.363261
+  longitude: 149.165230
+  altitude: 583.0" -1
 ```
 # gps
 
@@ -157,12 +167,29 @@ gazebo --verbose worlds/iris_arducopter_runway.world
 
 ```
 source /opt/ros/noetic/setup.bash
-source catkin_ws/devel_isolated/setup.bash
+source slam_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
 source /usr/share/gazebo/setup.sh
 export GAZEBO_MODEL_PATH=~/ardupilot_gazebo/models
 export GAZEBO_RESOURCE_PATH=~/ardupilot_gazebo/worlds:${GAZEBO_RESOURCE_PATH}
 sim_vehicle.py -v ArduCopter -f gazebo-iris --map --console --out 127.0.0.1:14550
 roslaunch cart_teb_test ardupilot.launch
-roslaunch cart_teb_test mavros.launch fcu_url:="udp://:14550@127.0.0.1:14550"
+roslaunch cart_teb_test mavros.launch fcu_url:="udp://:14550@"
+AirSimNH.exe  -windowed -ResX=640 -ResY=480 -nosound -NoVSync -FixedFrameRate=120
+
+sim_vehicle.py -v ArduCopter -f airsim-copter --console --map --out=127.0.0.1:14550
+rosrun cart_teb_test airsim_lidar_sensor.py
+rosrun cart_teb_test teb_to_mavros_velocity.py
+rosrun cart_teb_test airsim_camera_sensor.py  # Camera for VinsMono (640x480 @ 20Hz)
+# Or use launch file:
+roslaunch cart_teb_test airsim_camera.launch
 ```
+
+[/Script/Engine.RendererSettings]
+r.CustomDepth=0
+r.CustomDepthTemporalAAJitter=False
+
+pip install msgpack-rpc-python msgpack numpy opencv-python
+
+edit CMakeLists.txt de include cosys airsim api lib
+sudo apt install libeigen3-dev
