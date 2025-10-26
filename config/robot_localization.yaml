@@ -1,0 +1,214 @@
+# Robot Localization EKF Configuration
+# Fuses ORB-SLAM3 visual odometry with IMU data
+# Output: /odometry/filtered for Cartographer
+
+# ========================================
+# GENERAL SETTINGS
+# ========================================
+
+# Frequency of the filter (Hz)
+frequency: 50
+
+# Sensor timeout (seconds) - if no data received, sensor is ignored
+# Important for fallback when ORB-SLAM3 loses tracking
+sensor_timeout: 0.2  # 200ms timeout
+
+# If true, publishes the transform from world_frame to base_link_frame
+two_d_mode: false  # Set to true if you only care about 2D (x, y, yaw)
+
+# Transform timeout (seconds)
+transform_timeout: 0.0
+
+# If you have a transform between base_link and IMU, set this
+transform_time_offset: 0.0
+
+# Smooth output even if sensor data is lost temporarily
+smooth_lagged_data: true
+
+# History length (seconds) for smoothing
+history_length: 0.5
+
+# ========================================
+# FRAME IDs
+# ========================================
+
+# The filter outputs a transform from map_frame to odom_frame,
+# and from odom_frame to base_link_frame
+map_frame: map
+odom_frame: odom
+base_link_frame: base_link
+world_frame: odom  # Use 'odom' for local odometry, 'map' for global
+
+# ========================================
+# INPUT SENSORS
+# ========================================
+
+# -----------------------------------
+# ODOM0: ORB-SLAM3 Visual Odometry
+# -----------------------------------
+odom0: /orb_slam3/odom
+
+# Configuration: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+# true = use this value, false = ignore
+odom0_config: [true,  true,  true,   # x, y, z position
+               false, false, true,   # roll, pitch, yaw - only use yaw from visual
+               true,  true,  false,  # vx, vy, vz - use planar velocities
+               false, false, true,   # vroll, vpitch, vyaw - only use yaw rate
+               false, false, false]  # ax, ay, az - don't use acceleration from visual
+
+# Queue size for odometry messages
+odom0_queue_size: 10
+
+# If true, uses differential measurements (relative motion between messages)
+# Set to false for absolute odometry
+odom0_differential: false
+
+# If true, treats the measurement as relative to the first measurement
+odom0_relative: false
+
+# Reject outliers if innovation (difference from prediction) exceeds this threshold (Mahalanobis distance)
+# Increase this if ORB-SLAM3 occasionally jumps but is mostly good
+# Decrease to reject more outliers if ORB-SLAM3 is unstable
+odom0_reject_threshold: 5.0
+
+# Normalize quaternions from this sensor
+odom0_pose_use_child_frame: false
+
+# ========================================
+# Per-variable process noise covariance for odom0
+# Higher values = trust sensor less, trust prediction more
+# ========================================
+odom0_process_noise_covariance: [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,
+                                  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015]
+
+# -----------------------------------
+# IMU0: IMU Data from MAVROS
+# -----------------------------------
+imu0: /mavros/imu/data
+
+# Configuration: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+imu0_config: [false, false, false,  # x, y, z - IMU doesn't provide position
+              true,  true,  true,   # roll, pitch, yaw - use orientation
+              false, false, false,  # vx, vy, vz - IMU doesn't provide linear velocity
+              true,  true,  true,   # vroll, vpitch, vyaw - use angular velocity
+              true,  true,  true]   # ax, ay, az - use linear acceleration
+
+# Queue size for IMU messages
+imu0_queue_size: 10
+
+# If true, uses differential measurements
+imu0_differential: false
+
+# If true, treats the measurement as relative to the first measurement
+imu0_relative: true
+
+# Remove gravitational acceleration (9.81 m/s^2) from IMU measurements
+# Set to true if your IMU includes gravity in acceleration measurements
+imu0_remove_gravitational_acceleration: true
+
+# Reject threshold for IMU
+imu0_reject_threshold: 2.0
+
+# Normalize quaternions from IMU
+imu0_pose_use_child_frame: false
+
+# ========================================
+# Per-variable process noise covariance for imu0
+# ========================================
+imu0_process_noise_covariance: [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.001,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.001,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.001,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001,0.0,  0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001,0.0,  0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001,0.0,  0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.003,0.0,  0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.003,0.0,
+                                 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015]
+
+# ========================================
+# PROCESS NOISE COVARIANCE
+# ========================================
+# Process noise covariance matrix (Q)
+# Diagonal matrix: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+# Higher values = trust prediction less, trust measurements more
+process_noise_covariance: [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0,
+                           0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015]
+
+# ========================================
+# INITIAL STATE COVARIANCE
+# ========================================
+# Initial estimate error covariance matrix (P)
+# Higher values = more uncertain about initial state
+initial_estimate_covariance: [1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,  0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9, 0.0,
+                              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1e-9]
+
+# ========================================
+# OUTPUT SETTINGS
+# ========================================
+
+# Publish the transformation between frames
+publish_tf: true
+
+# Publish acceleration state
+publish_acceleration: false
+
+# Use control input (cmd_vel) if available
+# Set to false if you don't have control commands or don't want to use them
+use_control: false
+
+# Stamped control (twist with header)
+stamped_control: false
+
+# Control timeout (seconds)
+control_timeout: 0.2
+
+# Debugging
+print_diagnostics: true
+
+# The name of the node's diagnostic status
+diagnostic_updater_frequency: 1.0

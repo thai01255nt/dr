@@ -22,7 +22,7 @@ class AirSimCameraNode:
 
         # AirSim parameters
         self.vehicle_name = rospy.get_param('~vehicle_name', 'Copter')
-        self.camera_name = rospy.get_param('~camera_name', '0')  # Default camera
+        self.camera_name = rospy.get_param('~camera_name', 'downward_camera')  # Default camera
 
         # Camera parameters - Optimized for VinsMono on OrangePi 5 Max
         self.frame_id = rospy.get_param('~frame_id', 'camera')
@@ -183,20 +183,22 @@ class AirSimCameraNode:
                 if img_gray.shape[0] != self.image_height or img_gray.shape[1] != self.image_width:
                     img_gray = cv2.resize(img_gray, (self.image_width, self.image_height))
 
-                return img_gray
+                return img_gray, response.time_stamp
 
-            return None
+            return None, None
 
         except Exception as e:
             rospy.logerr(f"Error getting camera image: {e}")
-            return None
+            return None, None
 
-    def publish_image(self, img_gray):
+    def publish_image(self, img_gray, timestamp):
         """Publish grayscale image and camera info"""
         try:
             # Create timestamp
+            # secs = timestamp // 1_000_000_000
+            # nsecs = timestamp % 1_000_000_000
+            # timestamp = rospy.Time(secs, nsecs)
             timestamp = rospy.Time.now()
-
             # Convert grayscale image to ROS Image message
             # VinsMono expects mono8 encoding
             image_msg = self.bridge.cv2_to_imgmsg(img_gray, encoding="mono8")
@@ -223,11 +225,11 @@ class AirSimCameraNode:
         while not rospy.is_shutdown() and not self.shutdown_requested:
             try:
                 # Get camera image from AirSim
-                img = self.get_camera_image()
+                [img, timestamp] = self.get_camera_image()
 
                 if img is not None:
                     # Publish image and camera info
-                    self.publish_image(img)
+                    self.publish_image(img, timestamp)
                 else:
                     rospy.logwarn_throttle(5.0, "No image received from AirSim")
 

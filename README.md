@@ -193,3 +193,4 @@ pip install msgpack-rpc-python msgpack numpy opencv-python
 
 edit CMakeLists.txt de include cosys airsim api lib
 sudo apt install libeigen3-dev
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH

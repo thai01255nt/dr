@@ -150,10 +150,12 @@ class Ld19AirSimNode:
 
         return ranges, angle_min, angle_max, angle_increment
 
-    def create_laserscan_msg(self, ranges, angle_min, angle_max, angle_increment):
+    def create_laserscan_msg(self, ranges, angle_min, angle_max, angle_increment, timestamp):
         """Tạo LaserScan message - format giống LD19 driver"""
         scan = LaserScan()
-
+        # secs = timestamp // 1_000_000_000
+        # nsecs = timestamp % 1_000_000_000
+        # timestamp = rospy.Time(secs, nsecs)
         scan.header.stamp = rospy.Time.now()
         scan.header.frame_id = self.frame_id
 
@@ -188,7 +190,7 @@ class Ld19AirSimNode:
 
                     # Create and publish message
                     scan_msg = self.create_laserscan_msg(
-                        ranges, angle_min, angle_max, angle_increment
+                        ranges, angle_min, angle_max, angle_increment, lidar_data.time_stamp
                     )
                     self.scan_pub.publish(scan_msg)
 

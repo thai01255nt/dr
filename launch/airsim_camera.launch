@@ -3,7 +3,8 @@
     <!-- Optimized for OrangePi 5 Max: 640x480 @ 20Hz -->
 
     <arg name="vehicle_name" default="Copter" />
-    <arg name="camera_name" default="0" />
+    <arg name="camera_name" default="downward_camera" />
+    <!-- <arg name="camera_name" default="0" /> -->
     <arg name="frame_id" default="camera" />
 
     <!-- Camera parameters - VGA resolution @ 20Hz for OrangePi 5 Max -->
@@ -14,17 +15,17 @@
     <!-- Camera intrinsics - IMPORTANT: You MUST calibrate your camera and update these values! -->
     <!-- These are example values for a typical 640x480 camera -->
     <!-- Use kalibr or ROS camera_calibration package to get accurate values -->
-    <arg name="fx" default="458.654" />
-    <arg name="fy" default="457.296" />
-    <arg name="cx" default="367.215" />
-    <arg name="cy" default="248.375" />
+    <arg name="fx" default="322.5" />
+    <arg name="fy" default="325" />
+    <arg name="cx" default="325" />
+    <arg name="cy" default="238" />
 
     <!-- Distortion coefficients (radtan model: k1, k2, p1, p2, k3) -->
-    <arg name="k1" default="-0.28340811" />
-    <arg name="k2" default="0.07395907" />
-    <arg name="p1" default="0.00019359" />
-    <arg name="p2" default="1.76187114e-05" />
-    <arg name="k3" default="0.0" />
+    <arg name="k1" default="-0.151" />
+    <arg name="k2" default="0.0798" />
+    <arg name="p1" default="0.001003" />
+    <arg name="p2" default="0.00102" />
+    <arg name="k3" default="-0.02" />
 
     <!-- AirSim Camera Node -->
     <node pkg="cart_teb_test" type="airsim_camera_sensor.py" name="airsim_camera_node" output="screen">

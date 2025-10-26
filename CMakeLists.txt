@@ -7,11 +7,13 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   geometry_msgs
+  nav_msgs
   gazebo_ros
   gazebo_plugins
   xacro
   cv_bridge
   image_transport
+  robot_localization
 )
 
 find_package(OpenCV REQUIRED)
@@ -36,7 +38,7 @@ else()
 endif()
 
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs geometry_msgs cv_bridge image_transport
+  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs geometry_msgs nav_msgs cv_bridge image_transport robot_localization
 )
 
 include_directories(
@@ -75,5 +77,11 @@ catkin_install_python(PROGRAMS
   scripts/airsim_lidar_sensor.py
   scripts/teb_to_mavros_velocity.py
   scripts/airsim_camera_sensor.py
+  scripts/fake_clock.py
+  scripts/airsim_imu_sensor.py
+  scripts/odom_timeout_checker.py
+  scripts/odom_forwarder.py
+  scripts/pose_to_odom.py
+  scripts/airsim_publish.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
