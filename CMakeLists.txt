@@ -83,5 +83,7 @@ catkin_install_python(PROGRAMS
   scripts/odom_forwarder.py
   scripts/pose_to_odom.py
   scripts/airsim_publish.py
+  scripts/real_camera_publisher.py
+  scripts/calibrate_camera_charuco.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
