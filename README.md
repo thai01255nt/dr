@@ -115,7 +115,7 @@ export ROS_IP=192.168.2.108
 rosrun cart_teb_test qr_code_publisher.py
 
 source /opt/ros/noetic/setup.bash
-source catkin_ws/devel_isolated/setup.bash
+source slam_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
 export ROS_MASTER_URI=http://192.168.2.108:11311
 export ROS_IP=192.168.2.131
@@ -195,3 +195,5 @@ pip install msgpack-rpc-python msgpack numpy opencv-python
 edit CMakeLists.txt de include cosys airsim api lib
 sudo apt install libeigen3-dev
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+rosbag record -O camera_imu.bag /mavros/imu/data /camera/image_raw /camera/info 
