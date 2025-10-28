@@ -70,27 +70,33 @@ class RealCameraPublisher:
         """Initialize camera device with hardware acceleration for OrangePi 5 Max"""
         try:
             if self.use_gstreamer:
-                # GStreamer pipeline with hardware decoding for OrangePi 5 Max
-                # Using v4l2src with hardware capabilities
+                # GStreamer pipeline for Rockchip ISP (rkisp_mainpath)
+                # RK3588 ISP output is NV12, need to scale and convert
                 gst_pipeline = (
-                    f"v4l2src device=/dev/video{self.camera_id} ! "
-                    f"video/x-raw,width={self.image_width},height={self.image_height},framerate={self.frame_rate}/1 ! "
+                    f"v4l2src device=/dev/video{self.camera_id} io-mode=4 ! "
+                    f"video/x-raw,format=NV12,width=4224,height=3136,framerate={self.frame_rate}/1 ! "
+                    f"videoscale ! "
+                    f"video/x-raw,width={self.image_width},height={self.image_height} ! "
                     f"videoconvert ! "
-                    f"appsink max-buffers=1 drop=true"
+                    f"video/x-raw,format=BGR ! "
+                    f"appsink max-buffers=1 drop=true sync=false"
                 )
 
-                rospy.loginfo(f"Using GStreamer hardware pipeline: {gst_pipeline}")
+                rospy.loginfo(f"Using GStreamer RK3588 ISP pipeline: {gst_pipeline}")
                 self.cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
             else:
-                # Fallback to V4L2 backend
+                # Fallback to V4L2 backend with OpenCV
+                rospy.loginfo("Using V4L2 backend (OpenCV will handle ISP output)")
                 self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
 
             if not self.cap.isOpened():
                 rospy.logerr(f"Failed to open camera device {self.camera_id}")
+                rospy.logerr("Make sure camera is connected and media-ctl is configured")
                 return False
 
             if not self.use_gstreamer:
-                # Set camera resolution and parameters for V4L2 backend
+                # V4L2 backend: Set camera resolution and parameters
+                # Note: Rockchip ISP may not support all resolutions directly
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)
                 self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
@@ -98,11 +104,9 @@ class RealCameraPublisher:
                 # Set buffer size to 1 for minimal latency
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
-                # Disable auto focus and auto exposure for consistent performance
-                self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
-
-                # Set FOURCC format to MJPEG for better performance
-                self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
+                # Format: Try NV12 first (native ISP format), fallback to others
+                # NV12 = I420 in V4L2
+                self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('N','V','1','2'))
 
             # Verify settings
             actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -116,6 +120,8 @@ class RealCameraPublisher:
 
         except Exception as e:
             rospy.logerr(f"Failed to initialize camera: {e}")
+            import traceback
+            rospy.logerr(traceback.format_exc())
             return False
 
     def shutdown_hook(self):
