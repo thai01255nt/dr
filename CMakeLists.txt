@@ -66,6 +66,20 @@ if(EXISTS "${AIRSIM_ROOT}")
   )
 endif()
 
+# Real Camera Node (C++ - optimized for 30fps)
+add_executable(real_camera_node
+  src/real_camera_node.cpp
+)
+
+target_link_libraries(real_camera_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+
+add_dependencies(real_camera_node
+  ${catkin_EXPORTED_TARGETS}
+)
+
 # Python scripts
 catkin_install_python(PROGRAMS
   scripts/takeoff_and_hover.py
@@ -85,5 +99,6 @@ catkin_install_python(PROGRAMS
   scripts/airsim_publish.py
   scripts/real_camera_publisher.py
   scripts/calibrate_camera_charuco.py
+  scripts/real_camera_v4l2_direct.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
