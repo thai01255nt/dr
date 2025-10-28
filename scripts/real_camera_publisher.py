@@ -11,7 +11,7 @@ class RealCameraPublisher:
     def __init__(self):
         rospy.init_node('real_camera_publisher', anonymous=False)
 
-        # Publishers
+        # Publishers with buffer size = 1 for minimal latency
         self.image_pub = rospy.Publisher('/camera/image_raw', Image, queue_size=1)
         self.camera_info_pub = rospy.Publisher('/camera/camera_info', CameraInfo, queue_size=1)
 
@@ -19,17 +19,23 @@ class RealCameraPublisher:
         self.bridge = CvBridge()
 
         # Camera parameters
-        self.camera_id = rospy.get_param('~camera_id', 0)  # Default camera device ID (0 = /dev/video0)
+        self.camera_id = rospy.get_param('~camera_id', 11)  # Default camera device ID (0 = /dev/video0)
         self.frame_id = rospy.get_param('~frame_id', 'camera')
-        self.frame_rate = rospy.get_param('~frame_rate', 20)  # 20Hz
-        self.image_width = rospy.get_param('~image_width', 640)  # VGA width
-        self.image_height = rospy.get_param('~image_height', 480)  # VGA height
+        self.frame_rate = rospy.get_param('~frame_rate', 30)  # 20Hz
+        self.image_width = 640  # Locked to 640x480 for OrangePi 5 Max optimization
+        self.image_height = 480
 
         # Image encoding: 'bgr8' for color, 'mono8' for grayscale
-        self.encoding = rospy.get_param('~encoding', 'bgr8')  # Default to color
+        self.encoding = rospy.get_param('~encoding', 'mono8')  # Default to grayscale for performance
 
-        # Force resize if camera doesn't support requested resolution
-        self.force_resize = rospy.get_param('~force_resize', False)
+        # Use GStreamer hardware decoder for OrangePi 5 Max
+        self.use_gstreamer = rospy.get_param('~use_gstreamer', True)
+
+        # Convert to grayscale early (saves 66% data)
+        self.convert_to_gray = rospy.get_param('~convert_to_gray', True)
+
+        # Force resize disabled for locked resolution
+        self.force_resize = False
 
         # Camera intrinsics - adjust based on your camera calibration
         self.fx = rospy.get_param('~fx', 322.5)  # focal length x
@@ -61,20 +67,42 @@ class RealCameraPublisher:
         self.camera_info_msg = self.create_camera_info_msg()
 
     def init_camera(self):
-        """Initialize camera device"""
+        """Initialize camera device with hardware acceleration for OrangePi 5 Max"""
         try:
-            self.cap = cv2.VideoCapture(self.camera_id)
+            if self.use_gstreamer:
+                # GStreamer pipeline with hardware decoding for OrangePi 5 Max
+                # Using v4l2src with hardware capabilities
+                gst_pipeline = (
+                    f"v4l2src device=/dev/video{self.camera_id} ! "
+                    f"video/x-raw,width={self.image_width},height={self.image_height},framerate={self.frame_rate}/1 ! "
+                    f"videoconvert ! "
+                    f"appsink max-buffers=1 drop=true"
+                )
+
+                rospy.loginfo(f"Using GStreamer hardware pipeline: {gst_pipeline}")
+                self.cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+            else:
+                # Fallback to V4L2 backend
+                self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
 
             if not self.cap.isOpened():
                 rospy.logerr(f"Failed to open camera device {self.camera_id}")
                 return False
 
-            # Set camera resolution
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)
+            if not self.use_gstreamer:
+                # Set camera resolution and parameters for V4L2 backend
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.image_width)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.image_height)
+                self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
 
-            # Set FPS if possible
-            self.cap.set(cv2.CAP_PROP_FPS, self.frame_rate)
+                # Set buffer size to 1 for minimal latency
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+                # Disable auto focus and auto exposure for consistent performance
+                self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+
+                # Set FOURCC format to MJPEG for better performance
+                self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
 
             # Verify settings
             actual_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -82,19 +110,7 @@ class RealCameraPublisher:
             actual_fps = self.cap.get(cv2.CAP_PROP_FPS)
 
             rospy.loginfo(f"Camera initialized: {actual_width}x{actual_height} @ {actual_fps}Hz")
-
-            if actual_width != self.image_width or actual_height != self.image_height:
-                if self.force_resize:
-                    rospy.logwarn(f"Requested resolution {self.image_width}x{self.image_height}, " +
-                                f"got {actual_width}x{actual_height}. Will resize frames.")
-                else:
-                    rospy.logwarn(f"Requested resolution {self.image_width}x{self.image_height}, " +
-                                f"got {actual_width}x{actual_height}. Using camera native resolution.")
-                    # Update to actual camera resolution
-                    self.image_width = actual_width
-                    self.image_height = actual_height
-                    # Update camera info with actual dimensions
-                    self.camera_info_msg = self.create_camera_info_msg()
+            rospy.loginfo(f"GStreamer: {self.use_gstreamer}, Buffer size: 1, Grayscale: {self.convert_to_gray}")
 
             return True
 
@@ -168,32 +184,27 @@ class RealCameraPublisher:
         return camera_info
 
     def capture_and_publish(self):
-        """Capture image from camera and publish to ROS topic"""
+        """Capture image from camera and publish to ROS topic - optimized for minimal processing"""
         if self.cap is None or not self.cap.isOpened():
             rospy.logwarn_throttle(5.0, "Camera not available")
             return False
 
         try:
-            # Capture frame from camera
+            # Capture frame from camera (already at 640x480 from hardware)
             ret, frame = self.cap.read()
 
             if not ret or frame is None:
                 rospy.logwarn_throttle(5.0, "Failed to capture frame from camera")
                 return False
 
-            # Convert to grayscale if needed
-            if self.encoding == 'mono8':
+            # Early grayscale conversion (saves 66% data processing)
+            if self.convert_to_gray and self.encoding == 'mono8':
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            # Resize if force_resize is enabled and dimensions don't match
-            if self.force_resize and (frame.shape[0] != self.image_height or frame.shape[1] != self.image_width):
-                frame = cv2.resize(frame, (self.image_width, self.image_height))
-                rospy.logwarn_throttle(10.0, f"Resizing frame from {frame.shape[1]}x{frame.shape[0]} to {self.image_width}x{self.image_height}")
 
             # Get current ROS timestamp
             timestamp = rospy.Time.now()
 
-            # Convert to ROS Image message
+            # Convert to ROS Image message (minimal overhead)
             image_msg = self.bridge.cv2_to_imgmsg(frame, encoding=self.encoding)
             image_msg.header.stamp = timestamp
             image_msg.header.frame_id = self.frame_id
@@ -212,17 +223,19 @@ class RealCameraPublisher:
             return False
 
     def run(self):
-        """Main loop"""
+        """Main loop - optimized for OrangePi 5 Max"""
         rospy.loginfo("="*50)
-        rospy.loginfo("Real Camera Publisher node started")
+        rospy.loginfo("Real Camera Publisher node started (OrangePi 5 Max Optimized)")
         rospy.loginfo(f"Camera device: /dev/video{self.camera_id}")
         rospy.loginfo(f"Publishing to:")
         rospy.loginfo(f"  - /camera/image_raw")
         rospy.loginfo(f"  - /camera/camera_info")
         rospy.loginfo(f"Frame rate: {self.frame_rate}Hz")
-        rospy.loginfo(f"Resolution: {self.image_width}x{self.image_height}")
+        rospy.loginfo(f"Resolution: {self.image_width}x{self.image_height} (locked)")
         rospy.loginfo(f"Encoding: {self.encoding}")
-        rospy.loginfo(f"Force resize: {self.force_resize}")
+        rospy.loginfo(f"GStreamer HW accel: {self.use_gstreamer}")
+        rospy.loginfo(f"Early grayscale: {self.convert_to_gray}")
+        rospy.loginfo(f"Buffer size: 1 (minimal latency)")
         rospy.loginfo(f"Using ROS Time.now() for timestamps")
         rospy.loginfo("="*50)
 

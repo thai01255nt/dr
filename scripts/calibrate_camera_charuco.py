@@ -18,8 +18,8 @@ import threading
 
 class CharucoCalibrator:
     def __init__(self,
-                 squares_x=5,
-                 squares_y=7,
+                 squares_x=11,
+                 squares_y=8,
                  square_length=0.04,
                  marker_length=0.02,
                  dictionary_name='DICT_6X6_250'):
@@ -444,7 +444,7 @@ Examples:
         '--squares',
         type=int,
         nargs=2,
-        default=[5, 7],
+        default=[11, 8],
         metavar=('X', 'Y'),
         help='Number of squares in X and Y (default: 5 7)'
     )
@@ -452,21 +452,32 @@ Examples:
     parser.add_argument(
         '--square-size',
         type=float,
-        default=40.0,
+        default=15,
         help='Square side length in mm (default: 40.0)'
     )
 
     parser.add_argument(
         '--marker-size',
         type=float,
-        default=20.0,
+        default=11,
         help='Marker side length in mm (default: 20.0)'
     )
-
+            # 'DICT_4X4_50': cv2.aruco.DICT_4X4_50,
+            # 'DICT_4X4_100': cv2.aruco.DICT_4X4_100,
+            # 'DICT_4X4_250': cv2.aruco.DICT_4X4_250,
+            # 'DICT_5X5_50': cv2.aruco.DICT_5X5_50,
+            # 'DICT_5X5_100': cv2.aruco.DICT_5X5_100,
+            # 'DICT_5X5_250': cv2.aruco.DICT_5X5_250,
+            # 'DICT_6X6_50': cv2.aruco.DICT_6X6_50,
+            # 'DICT_6X6_100': cv2.aruco.DICT_6X6_100,
+            # 'DICT_6X6_250': cv2.aruco.DICT_6X6_250,
+            # 'DICT_7X7_50': cv2.aruco.DICT_7X7_50,
+            # 'DICT_7X7_100': cv2.aruco.DICT_7X7_100,
+            # 'DICT_7X7_250': cv2.aruco.DICT_7X7_250,
     parser.add_argument(
         '--dict',
         type=str,
-        default='DICT_6X6_250',
+        default='DICT_4X4_250',
         help='ArUco dictionary (default: DICT_6X6_250)'
     )
 

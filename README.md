@@ -25,7 +25,7 @@ rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
 param1: 105 # message_id (HIGHRES_IMU)
-param2: 10000 # interval_us (100Hz)
+param2: 5000 # interval_us (200Hz)
 param3: 0.0
 param4: 0.0
 param5: 0.0
@@ -35,7 +35,7 @@ rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
 param1: 31 # message_id (ATTITUDE_QUATERNION)
-param2: 20000 # interval_us (50Hz)
+param2: 0 # interval_us (50Hz)
 param3: 0.0
 param4: 0.0
 param5: 0.0
@@ -108,16 +108,16 @@ param7: 0.0"
 source /opt/ros/noetic/setup.bash
 source slam_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
-export ROS_MASTER_URI=http://192.168.123.112:11311
-export ROS_IP=192.168.123.112
+export ROS_MASTER_URI=http://192.168.2.108:11311
+export ROS_IP=192.168.2.108
 
 rosrun cart_teb_test qr_code_publisher.py
 
 source /opt/ros/noetic/setup.bash
 source catkin_ws/devel_isolated/setup.bash
 source cart_teb_test/devel/setup.bash
-export ROS_MASTER_URI=http://192.168.123.112:11311
-export ROS_IP=192.168.123.129
+export ROS_MASTER_URI=http://192.168.2.108:11311
+export ROS_IP=192.168.2.131
 
 rosrun cart_teb_test qr_code_subscriber.py
 
