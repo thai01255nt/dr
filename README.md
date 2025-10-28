@@ -25,7 +25,7 @@ rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
 param1: 105 # message_id (HIGHRES_IMU)
-param2: 5000 # interval_us (200Hz)
+param2: 0 # interval_us (200Hz)
 param3: 0.0
 param4: 0.0
 param5: 0.0
