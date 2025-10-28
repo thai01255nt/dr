@@ -85,7 +85,5 @@ catkin_install_python(PROGRAMS
   scripts/airsim_publish.py
   scripts/real_camera_publisher.py
   scripts/calibrate_camera_charuco.py
-  scripts/real_camera_v4l2_direct.py
-  scripts/real_camera_v4l2_minimal.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
