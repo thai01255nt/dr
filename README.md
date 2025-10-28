@@ -1,4 +1,5 @@
 pip3 install pyzbar
+pip3 install v4l2
 
 rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
