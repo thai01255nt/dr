@@ -3,7 +3,7 @@
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_mono_inertial" output="screen">
         <!-- change the topics according to the dataset -->
         <remap from="/camera/image_raw"     to="/camera/image_raw"/>
-        <remap from="/imu"                  to="/mavros/imu/data"/>
+        <remap from="/imu"                  to="/mavros/imu/data_raw"/>
 
         <!-- Parameters for original ORB-SLAM3 -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>

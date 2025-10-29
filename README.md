@@ -26,7 +26,7 @@ rosservice call /mavros/cmd/command "broadcast: false
 command: 511 # MAV_CMD_SET_MESSAGE_INTERVAL
 confirmation: 0
 param1: 105 # message_id (HIGHRES_IMU)
-param2: 0 # interval_us (200Hz)
+param2: 5000 # interval_us (200Hz)
 param3: 0.0
 param4: 0.0
 param5: 0.0
@@ -196,4 +196,7 @@ edit CMakeLists.txt de include cosys airsim api lib
 sudo apt install libeigen3-dev
 export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-rosbag record -O camera_imu.bag /mavros/imu/data /camera/image_raw /camera/info 
+rosbag record -O camera_imu.bag /mavros/imu/data_raw /camera/image_raw /camera/camera_info 
+rosbag record -O static_imu.bag /mavros/imu/data_raw 
+
+rosrun kalibr kalibr_calibrate_cameras --bag /camera_imu.bag --target /april_6x6.yaml --models pinhole-radtan --topics /mavros/imu/data_raw /camera/image_raw
